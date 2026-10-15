@@ -12,8 +12,8 @@ messages and stable exit codes.
 | Module | Responsibility | Status |
 |---|---|---|
 | `cli.py` | Command-line interface and argument validation | **Implemented (Stage 1)** |
-| `exceptions.py` | Application-specific exception hierarchy | **Implemented (Stage 1)** |
-| `github_client.py` | GitHub REST API client and error handling | Planned (Stage 2) |
+| `exceptions.py` | Application-specific exception hierarchy | **Implemented (Stage 1–2)** |
+| `github_client.py` | GitHub REST API client and error handling | **Implemented (Stage 2)** |
 | `repository.py` | Repository metadata analysis | Planned (Stage 3) |
 | `branches.py` | Branch summaries | Planned (Stage 3) |
 | `commits.py` | Recent commit analysis | Planned (Stage 3) |
@@ -51,6 +51,31 @@ migrated into the modules above across Stages 2–5.
 
 The URL is validated locally; no network request is made to it. The GitHub
 API performs the authoritative existence and access check (Stage 2).
+
+## GitHub API Client (Stage 2)
+
+`gitlense.github_client.GitHubClient` provides a typed wrapper around the
+GitHub REST API with:
+
+- **Authentication**: Reads `GITHUB_TOKEN` from environment at request time
+  (never cached at init). Supports explicit token injection for testing.
+- **Error handling**: All failures raise typed exceptions from
+  `gitlense.exceptions`:
+  - `AuthenticationError` (401)
+  - `RepositoryNotFoundError` (404)
+  - `RateLimitExceededError` (403 with `X-RateLimit-Reset` header)
+  - `GitHubAPIError` (other HTTP errors, with parsed message)
+  - `NetworkError` (DNS, connection failures)
+  - `TimeoutError` (request timeouts)
+- **Configuration**: `GitHubClientConfig` dataclass for timeout, per-page
+  limits, user-agent, and custom API base (GitHub Enterprise).
+- **Pagination**: `paginate()` generator handles multi-page results with
+  `max_pages` limit and automatic termination on partial pages.
+- **Repository endpoints**: `get_repository`, `get_branches`, `get_commits`,
+  `get_contributors`, `get_repository_contents`, `get_file_content`
+  (handles base64 and download URLs), `get_rate_limit`.
+- **Testability**: Accepts custom `requests.Session` for mocking; token
+  injection via constructor.
 
 ## Testing
 
