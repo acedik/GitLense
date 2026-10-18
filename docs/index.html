@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>chitgit - AI GitHub Commit Plagiarism Checker & CSV Exporter</title>
+  <meta name="description" content="AI-powered GitHub commit analysis tool. Detects code plagiarism and exports detailed CSV reports using Google Gemini.">
+  <style>
+    :root {
+      --bg-matte: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.7);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #ffffff;
+      --success: #10b981;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-matte);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-top {
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, #ffffff 0%, rgba(255, 255, 255, 0) 70%);
+    }
+
+    .glow-bottom {
+      bottom: -150px;
+      right: -100px;
+      background: radial-gradient(circle, #a1a1aa 0%, rgba(161, 161, 170, 0) 70%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 40px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 50px;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      background: #ffffff;
+      color: #09090b;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+    }
+
+    .brand-name {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 30px 0 60px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-title {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -1.2px;
+      line-height: 1.15;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #ffffff 30%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin: 0 auto 36px;
+    }
+
+    .cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    @keyframes shine-sweep {
+      0% { transform: translateX(-160%) skewX(-20deg); }
+      30%, 100% { transform: translateX(260%) skewX(-20deg); }
+    }
+
+    .btn-primary {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0%, #e4e4e7 100%);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: var(--radius-md);
+      color: #09090b;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 14px 28px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25);
+      transition: all 0.2s;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 40%; height: 100%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.9) 50%, transparent 100%);
+      transform: translateX(-160%) skewX(-20deg);
+      animation: shine-sweep 3.5s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 26px rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 22px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Installation Steps */
+    .section {
+      margin-bottom: 60px;
+    }
+
+    .section-heading {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      margin-bottom: 14px;
+      color: #ffffff;
+    }
+
+    .step-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .step-code {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #e4e4e7;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 30px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
+
+  <div class="container">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="logo-group">
+        <div class="logo-badge">cg</div>
+        <span class="brand-name">chitgit</span>
+      </div>
+      <div class="nav-links">
+        <a href="https://github.com/acedik/GitLense" target="_blank" class="btn-secondary">GitHub ↗</a>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <span class="hero-badge">⚡ v1.1.0 • 100% FREE PUBLIC DOWNLOAD</span>
+      <h1 class="hero-title">AI Commit Plagiarism Checker<br>for GitHub</h1>
+      <p class="hero-subtitle">
+        Inspect GitHub commits for code plagiarism using Google Gemini AI, enforce repository integrity, and export verified CSV audit reports in 1 click.
+      </p>
+
+      <div class="cta-group">
+        <a href="chitgit_chrome_extension.zip" download class="btn-primary">
+          📥 Download chitgit (.zip) - Free
+        </a>
+        <a href="https://github.com/acedik/GitLense" target="_blank" class="btn-secondary">
+          ⭐ Star on GitHub
+        </a>
+      </div>
+    </section>
+
+    <!-- 10-Second Install Guide -->
+    <section class="section">
+      <h2 class="section-heading">How to Install in 10 Seconds (Chrome / Edge / Brave)</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3 class="step-title">Download & Unzip</h3>
+          <p class="step-desc">Click the download button above to save <span class="step-code">chitgit_chrome_extension.zip</span> and extract it on your computer.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3 class="step-title">Enable Developer Mode</h3>
+          <p class="step-desc">Open Chrome and go to <span class="step-code">chrome://extensions</span>.<br>Toggle <strong>Developer mode</strong> in the top-right corner.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3 class="step-title">Load Unpacked</h3>
+          <p class="step-desc">Click <strong>Load unpacked</strong> and select the extracted folder. chitgit is now active on all GitHub repositories!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features -->
+    <section class="section">
+      <h2 class="section-heading">Built for Developers, Reviewers & Hackathons</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">1-Click GitHub Inspection</h3>
+          <p class="feature-desc">Auto-detects the active repository on github.com and evaluates commit diffs in real-time.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3 class="feature-title">Google Gemini AI Engine</h3>
+          <p class="feature-desc">Powered by Gemini 3.8 Flash & 1.5 Pro deep reasoning with structured plagiarism verdicts.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">RFC 4180 CSV Reports</h3>
+          <p class="feature-desc">Export detailed audit reports complete with diff stats, confidence scores, and explanations.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 class="feature-title">20 Free Searches per Device</h3>
+          <p class="feature-desc">Hardware fingerprinting prevents multi-account credit abuse while giving everyone free scans.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🇮🇳</div>
+          <h3 class="feature-title">Zero-Fee Direct UPI</h3>
+          <p class="feature-desc">Upgrade to Pro using GPay, PhonePe, or Paytm with instant bank settlements and zero fees.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3 class="feature-title">100% Client-Side Privacy</h3>
+          <p class="feature-desc">Zero tracking. Keys and tokens stay strictly encrypted in your local browser storage.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>chitgit © 2026 • Built by <a href="https://github.com/acedik" target="_blank">Anshuman Tiwari</a> • MIT License</p>
+    </footer>
+  </div>
+</body>
+</html>
