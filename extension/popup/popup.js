@@ -227,8 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         'commitCount',
         'geminiModel'
       ], (data) => {
-        const defaultKey = 'AQ.Ab8RN6LjjBwHW6qYQE1lDLvE7TTm1ZMZa99GEvwlb61BksyBSQ';
-        inputGeminiKey.value = data.geminiApiKey || defaultKey;
+        inputGeminiKey.value = data.geminiApiKey || '';
         if (data.githubToken) inputGithubToken.value = data.githubToken;
         if (data.commitCount) selectCommitCount.value = data.commitCount;
         selectModel.value = data.geminiModel || 'gemini-flash-latest';
@@ -466,9 +465,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? `<div class="commit-snippets">${escapeHTML(ai.flagged_code_snippets.join('\n---\n'))}</div>`
       : '';
 
+    const safeUrl = (commit.html_url && /^https:\/\/github\.com\//i.test(commit.html_url))
+      ? escapeHTML(commit.html_url)
+      : '#';
+
     card.innerHTML = `
       <div class="commit-header">
-        <a href="${commit.html_url}" target="_blank" class="commit-sha-link">${shortSha} ↗</a>
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="commit-sha-link">${shortSha} ↗</a>
         <span class="verdict-badge verdict-${verdict}">${verdict} (${score})</span>
       </div>
       <div class="commit-msg">${escapeHTML(commit.message || 'No commit message')}</div>

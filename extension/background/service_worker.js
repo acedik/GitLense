@@ -3,7 +3,7 @@
  */
 
 const DEFAULT_CONFIG = {
-  geminiApiKey: 'AQ.Ab8RN6LjjBwHW6qYQE1lDLvE7TTm1ZMZa99GEvwlb61BksyBSQ',
+  geminiApiKey: '',
   geminiModel: 'gemini-flash-latest',
   commitCount: '5'
 };
