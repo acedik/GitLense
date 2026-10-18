@@ -19,8 +19,18 @@ RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "").strip()
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "").strip()
 PORT = int(os.getenv("PORT", 5000))
 
-# 2. Initialize Flask App & CORS
-app = Flask(__name__, template_folder="templates", static_folder="static")
+# 2. Determine Base and Template Directories (works for local and Vercel serverless)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(BASE_DIR, "templates")):
+    TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
+elif os.path.exists(os.path.join(BASE_DIR, "api", "templates")):
+    TEMPLATE_DIR = os.path.join(BASE_DIR, "api", "templates")
+else:
+    TEMPLATE_DIR = os.path.join(os.path.dirname(BASE_DIR), "templates")
+
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # 3. Initialize Razorpay Client
