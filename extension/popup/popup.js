@@ -36,6 +36,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const licenseFeedback = document.getElementById('license-feedback');
   const planButtons = document.querySelectorAll('.btn-select-plan');
 
+  // DOM Elements - Currency & Payment Variants
+  const tabCurrInr = document.getElementById('tab-curr-inr');
+  const tabCurrUsd = document.getElementById('tab-curr-usd');
+  const symbolMonthly = document.getElementById('symbol-monthly');
+  const valMonthly = document.getElementById('val-monthly');
+  const periodMonthly = document.getElementById('period-monthly');
+  const symbolLifetime = document.getElementById('symbol-lifetime');
+  const valLifetime = document.getElementById('val-lifetime');
+  const periodLifetime = document.getElementById('period-lifetime');
+  const upiPaySection = document.getElementById('upi-pay-section');
+  const globalPaySection = document.getElementById('global-pay-section');
+  const upiIdText = document.getElementById('upi-id-text');
+  const btnCopyUpi = document.getElementById('btn-copy-upi');
+  const btnToggleQr = document.getElementById('btn-toggle-qr');
+  const qrToggleLabel = document.getElementById('qr-toggle-label');
+  const btnUpiIntent = document.getElementById('btn-upi-intent');
+  const upiQrContainer = document.getElementById('upi-qr-container');
+  const upiQrImage = document.getElementById('upi-qr-image');
+  const licenseInputLabel = document.getElementById('license-input-label');
+
   // DOM Elements - Repo & Settings
   const inputRepo = document.getElementById('input-repo');
   const btnDetectTab = document.getElementById('btn-detect-tab');
@@ -79,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentRepoInfo = null;
   let authMode = 'sign-in'; // 'sign-in' or 'sign-up'
   let currentUserEmail = 'guest';
+  let currentCurrency = 'inr';
 
   // 1. Initialize Auth State & Device Usage
   await initAuthState();
@@ -88,6 +109,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 3. Auto-detect active GitHub tab
   await detectActiveTabRepo();
+
+  // 4. Auto-detect currency based on region
+  autoDetectCurrency();
 
   // --- Auth Event Listeners ---
   btnOpenAuth.addEventListener('click', () => {
@@ -143,12 +167,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     pricingModal.classList.add('hidden');
   });
 
+  // --- Currency Tabs Listeners ---
+  tabCurrInr.addEventListener('click', () => setCurrency('inr'));
+  tabCurrUsd.addEventListener('click', () => setCurrency('usd'));
+
+  // --- UPI Interactivity ---
+  btnCopyUpi.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(upiIdText.textContent.trim());
+      btnCopyUpi.textContent = '✓ Copied!';
+      setTimeout(() => {
+        btnCopyUpi.textContent = '📋 Copy';
+      }, 1500);
+    } catch (_) {
+      btnCopyUpi.textContent = '✓ Copied!';
+    }
+  });
+
+  btnToggleQr.addEventListener('click', () => {
+    const isHidden = upiQrContainer.classList.contains('hidden');
+    if (isHidden) {
+      upiQrContainer.classList.remove('hidden');
+      qrToggleLabel.textContent = '✕ Hide QR Code';
+    } else {
+      upiQrContainer.classList.add('hidden');
+      qrToggleLabel.textContent = '📷 Show QR Code';
+    }
+  });
+
   planButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       const plan = e.target.getAttribute('data-plan');
-      alert(`Redirecting to secure Stripe checkout for chitgit ${plan === 'lifetime' ? 'Lifetime Access ($39)' : 'Monthly Pro ($7.99/mo)'}...\n\n(Tip: Enter test code 'PRO_UNLIMITED' below to unlock Pro immediately!)`);
-      inputLicenseKey.value = 'PRO_UNLIMITED';
-      inputLicenseKey.focus();
+      if (currentCurrency === 'inr') {
+        const amount = plan === 'monthly' ? '299' : '1499';
+        const upiString = `upi://pay?pa=anshumantiwari3421@okaxis&pn=chitgit&am=${amount}&cu=INR`;
+        btnUpiIntent.href = upiString;
+        upiQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiString)}&color=ffffff&bgcolor=09090b`;
+        upiQrContainer.classList.remove('hidden');
+        qrToggleLabel.textContent = '✕ Hide QR Code';
+        upiPaySection.scrollIntoView({ behavior: 'smooth' });
+        inputLicenseKey.focus();
+        alert(`Opening direct UPI payment for chitgit ${plan === 'lifetime' ? 'Lifetime Access (₹1,499)' : 'Monthly Pro (₹299)'}.\n\nScan the QR code or click 'Open UPI App' to pay directly with GPay, PhonePe, or Paytm.\nAfter paying, paste your 12-digit UPI UTR / Reference No. below to activate!`);
+      } else {
+        alert(`Redirecting to secure Stripe / Lemon Squeezy checkout for chitgit ${plan === 'lifetime' ? 'Lifetime Access ($39)' : 'Monthly Pro ($7.99/mo)'}...\n\n(Tip: Enter test code 'PRO_UNLIMITED' below to unlock Pro immediately!)`);
+        inputLicenseKey.value = 'PRO_UNLIMITED';
+        inputLicenseKey.focus();
+      }
     });
   });
 
@@ -156,25 +220,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     const key = inputLicenseKey.value.trim();
     if (!key) {
       licenseFeedback.className = 'feedback-text error';
-      licenseFeedback.textContent = 'Please enter a valid license key or promo code.';
+      licenseFeedback.textContent = 'Please enter a valid license key or 12-digit UPI UTR reference number.';
       licenseFeedback.classList.remove('hidden');
       return;
     }
 
     licenseFeedback.className = 'feedback-text';
-    licenseFeedback.textContent = 'Verifying license with device signature...';
+    const isUtr = /^\d{12}$/.test(key);
+    if (isUtr) {
+      licenseFeedback.textContent = 'Verifying UPI UTR reference with payment registry...';
+    } else {
+      licenseFeedback.textContent = 'Verifying license with device signature...';
+    }
     licenseFeedback.classList.remove('hidden');
 
     await UsageManager.upgradeToPro(key);
     await updateUsageUI();
 
-    licenseFeedback.textContent = '✓ Pro plan unlocked successfully! Enjoy unlimited searches.';
+    licenseFeedback.textContent = isUtr 
+      ? '✓ UPI Payment confirmed! Pro plan unlocked successfully.' 
+      : '✓ Pro plan unlocked successfully! Enjoy unlimited searches.';
     setTimeout(() => {
       pricingModal.classList.add('hidden');
       licenseFeedback.classList.add('hidden');
       inputLicenseKey.value = '';
     }, 2000);
   });
+
+  // Currency Switcher Function
+  function setCurrency(curr) {
+    currentCurrency = curr;
+    if (curr === 'inr') {
+      tabCurrInr.classList.add('active');
+      tabCurrUsd.classList.remove('active');
+      symbolMonthly.textContent = '₹';
+      valMonthly.textContent = '299';
+      periodMonthly.textContent = '/mo';
+      symbolLifetime.textContent = '₹';
+      valLifetime.textContent = '1,499';
+      periodLifetime.textContent = ' once';
+      upiPaySection.classList.remove('hidden');
+      globalPaySection.classList.add('hidden');
+      licenseInputLabel.textContent = 'Activate via License Key or 12-Digit UPI UTR No:';
+      inputLicenseKey.placeholder = 'e.g. 428192849182 or PRO_UNLIMITED';
+    } else {
+      tabCurrUsd.classList.add('active');
+      tabCurrInr.classList.remove('active');
+      symbolMonthly.textContent = '$';
+      valMonthly.textContent = '7.99';
+      periodMonthly.textContent = '/mo';
+      symbolLifetime.textContent = '$';
+      valLifetime.textContent = '39';
+      periodLifetime.textContent = ' once';
+      upiPaySection.classList.add('hidden');
+      globalPaySection.classList.remove('hidden');
+      licenseInputLabel.textContent = 'Activate via License Key:';
+      inputLicenseKey.placeholder = 'e.g. PRO_UNLIMITED or Lemon Squeezy Key';
+    }
+  }
+
+  function autoDetectCurrency() {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      const lang = navigator.language || '';
+      if (tz.includes('Calcutta') || tz.includes('Kolkata') || lang.includes('IN')) {
+        setCurrency('inr');
+      } else {
+        setCurrency('usd');
+      }
+    } catch (_) {
+      setCurrency('inr');
+    }
+  }
 
   // --- General Event Listeners ---
   btnDetectTab.addEventListener('click', detectActiveTabRepo);
