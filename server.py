@@ -1,9 +1,8 @@
 """
-chitgit / GitLense - Razorpay Standard Web Checkout Server
-Delegates to api.index for full parity between local dev and Vercel serverless.
+chitgit / GitLense - Razorpay Standard Web Checkout Local Server
 """
 import os
-from api.index import app, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
+from app import app, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
