@@ -2,6 +2,9 @@
 
 **chitgit** is an AI-powered GitHub commit analysis tool and **Google Chrome Extension (Manifest V3)** with minimal frosted glassmorphism styling, user authentication (Supabase / Firebase / Local), and automated plagiarism detection powered by the **Google Gemini API**.
 
+🌐 **Official Free Web App & Direct Download**: [https://acedik.github.io/GitLense/](https://acedik.github.io/GitLense/)  
+📦 **Direct ZIP Download**: [Download chitgit (.zip)](https://acedik.github.io/GitLense/chitgit_chrome_extension.zip)
+
 ---
 
 ## 🌟 Key Features
