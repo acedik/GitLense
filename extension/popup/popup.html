@@ -37,6 +37,72 @@
       </div>
     </header>
 
+    <!-- Device Usage & Free Search Limit Bar -->
+    <section class="usage-bar glass-card">
+      <div class="usage-info">
+        <span class="usage-dot" id="usage-status-dot"></span>
+        <span class="usage-text" id="usage-label">Checking free search limit...</span>
+      </div>
+      <button id="btn-show-plans" class="btn-upgrade-glow" title="View Plans & Pricing">⚡ Get Pro</button>
+    </section>
+
+    <!-- Pricing & Device Limit Modal -->
+    <section id="pricing-modal" class="pricing-modal glass-card hidden">
+      <div class="pricing-header">
+        <div>
+          <span class="badge-pro">PRO UNLOCK</span>
+          <h2 class="pricing-title">Upgrade chitgit</h2>
+        </div>
+        <button id="btn-close-pricing" class="btn-logout" title="Close">✕</button>
+      </div>
+
+      <!-- Device Abuse Warning (Visible when device is locked) -->
+      <div id="device-locked-alert" class="device-alert hidden">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-content">
+          <strong>Device Free Searches Exhausted</strong>
+          <p id="device-locked-reason">This device has consumed all 20 free searches across registered accounts. Upgrade to continue.</p>
+        </div>
+      </div>
+
+      <div class="plans-grid">
+        <!-- Monthly Plan -->
+        <div class="plan-card glass-card">
+          <div class="plan-type">Monthly Pro</div>
+          <div class="plan-price">$7.99<span>/mo</span></div>
+          <ul class="plan-features">
+            <li>✓ Unlimited commit searches</li>
+            <li>✓ Deep 50-commit history scans</li>
+            <li>✓ Multi-account device unlock</li>
+            <li>✓ Gemini 1.5 Pro deep reasoning</li>
+            <li>✓ Full CSV report export</li>
+          </ul>
+          <button class="btn-primary w-full btn-select-plan" data-plan="monthly">Choose Monthly</button>
+        </div>
+
+        <!-- Lifetime Plan -->
+        <div class="plan-card glass-card plan-featured">
+          <span class="plan-badge-popular">POPULAR</span>
+          <div class="plan-type">Lifetime Pro</div>
+          <div class="plan-price">$39<span> once</span></div>
+          <ul class="plan-features">
+            <li>✓ Everything in Pro forever</li>
+            <li>✓ Unlimited scans on this device</li>
+            <li>✓ Zero monthly subscriptions</li>
+            <li>✓ All future software updates</li>
+          </ul>
+          <button class="btn-primary w-full btn-select-plan" data-plan="lifetime">Get Lifetime Access</button>
+        </div>
+      </div>
+
+      <!-- Quick License Key Activator -->
+      <div class="license-activator">
+        <input type="text" id="input-license-key" placeholder="Enter License Key (e.g. PRO_UNLIMITED)" spellcheck="false">
+        <button id="btn-activate-license" class="btn-secondary">Activate</button>
+      </div>
+      <div id="license-feedback" class="feedback-text hidden"></div>
+    </section>
+
     <!-- Auth Modal / Overlay -->
     <section id="auth-panel" class="auth-panel glass-card hidden">
       <div class="auth-tabs">
@@ -146,7 +212,7 @@
             <option value="5" selected>Last 5 commits</option>
             <option value="10">Last 10 commits</option>
             <option value="20">Last 20 commits</option>
-            <option value="50">Last 50 commits</option>
+            <option value="50">Last 50 commits (Pro)</option>
           </select>
         </div>
 
@@ -226,6 +292,8 @@
   </div>
 
   <!-- Scripts -->
+  <script src="../lib/device_fingerprint.js"></script>
+  <script src="../lib/usage_manager.js"></script>
   <script src="../lib/auth_api.js"></script>
   <script src="../lib/github_api.js"></script>
   <script src="../lib/gemini_api.js"></script>

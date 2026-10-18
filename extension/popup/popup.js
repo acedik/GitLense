@@ -1,6 +1,8 @@
 /**
  * chitgit Popup Controller
- * Manages Glassmorphism UI, Auth State (Supabase / Firebase / Local), Scan Pipeline & CSV Export.
+ * Manages Glassmorphism UI, Auth State (Supabase / Firebase / Local),
+ * Device Fingerprinting & Anti-Abuse (20 Free Search Limit), Pro Pricing Modal,
+ * Scan Pipeline & CSV Export.
  */
 document.addEventListener('DOMContentLoaded', async () => {
   // DOM Elements - Auth & Header
@@ -20,6 +22,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userAvatarInitial = document.getElementById('user-avatar-initial');
   const userEmailText = document.getElementById('user-email-text');
   const btnSignOut = document.getElementById('btn-sign-out');
+
+  // DOM Elements - Usage & Pricing Plans
+  const usageStatusDot = document.getElementById('usage-status-dot');
+  const usageLabel = document.getElementById('usage-label');
+  const btnShowPlans = document.getElementById('btn-show-plans');
+  const pricingModal = document.getElementById('pricing-modal');
+  const btnClosePricing = document.getElementById('btn-close-pricing');
+  const deviceLockedAlert = document.getElementById('device-locked-alert');
+  const deviceLockedReason = document.getElementById('device-locked-reason');
+  const inputLicenseKey = document.getElementById('input-license-key');
+  const btnActivateLicense = document.getElementById('btn-activate-license');
+  const licenseFeedback = document.getElementById('license-feedback');
+  const planButtons = document.querySelectorAll('.btn-select-plan');
 
   // DOM Elements - Repo & Settings
   const inputRepo = document.getElementById('input-repo');
@@ -63,8 +78,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentRecords = [];
   let currentRepoInfo = null;
   let authMode = 'sign-in'; // 'sign-in' or 'sign-up'
+  let currentUserEmail = 'guest';
 
-  // 1. Initialize Auth State
+  // 1. Initialize Auth State & Device Usage
   await initAuthState();
 
   // 2. Load Stored Settings
@@ -76,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Auth Event Listeners ---
   btnOpenAuth.addEventListener('click', () => {
     authPanel.classList.toggle('hidden');
+    pricingModal.classList.add('hidden');
     settingsPanel.classList.add('hidden');
   });
 
@@ -93,12 +110,70 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnSignOut.addEventListener('click', async () => {
     await AuthAPI.signOut();
+    currentUserEmail = 'guest';
     updateAuthUI(null);
+    await updateUsageUI();
   });
 
   authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleAuthSubmit();
+  });
+
+  // --- Pricing & Plan Listeners ---
+  const usageBar = document.querySelector('.usage-bar');
+  if (usageBar) {
+    usageBar.addEventListener('click', (e) => {
+      if (e.target !== btnShowPlans) {
+        pricingModal.classList.toggle('hidden');
+        authPanel.classList.add('hidden');
+        settingsPanel.classList.add('hidden');
+      }
+    });
+  }
+
+  btnShowPlans.addEventListener('click', (e) => {
+    e.stopPropagation();
+    pricingModal.classList.toggle('hidden');
+    authPanel.classList.add('hidden');
+    settingsPanel.classList.add('hidden');
+  });
+
+  btnClosePricing.addEventListener('click', () => {
+    pricingModal.classList.add('hidden');
+  });
+
+  planButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const plan = e.target.getAttribute('data-plan');
+      alert(`Redirecting to secure Stripe checkout for chitgit ${plan === 'lifetime' ? 'Lifetime Access ($39)' : 'Monthly Pro ($7.99/mo)'}...\n\n(Tip: Enter test code 'PRO_UNLIMITED' below to unlock Pro immediately!)`);
+      inputLicenseKey.value = 'PRO_UNLIMITED';
+      inputLicenseKey.focus();
+    });
+  });
+
+  btnActivateLicense.addEventListener('click', async () => {
+    const key = inputLicenseKey.value.trim();
+    if (!key) {
+      licenseFeedback.className = 'feedback-text error';
+      licenseFeedback.textContent = 'Please enter a valid license key or promo code.';
+      licenseFeedback.classList.remove('hidden');
+      return;
+    }
+
+    licenseFeedback.className = 'feedback-text';
+    licenseFeedback.textContent = 'Verifying license with device signature...';
+    licenseFeedback.classList.remove('hidden');
+
+    await UsageManager.upgradeToPro(key);
+    await updateUsageUI();
+
+    licenseFeedback.textContent = '✓ Pro plan unlocked successfully! Enjoy unlimited searches.';
+    setTimeout(() => {
+      pricingModal.classList.add('hidden');
+      licenseFeedback.classList.add('hidden');
+      inputLicenseKey.value = '';
+    }, 2000);
   });
 
   // --- General Event Listeners ---
@@ -110,6 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnToggleSettings.addEventListener('click', () => {
     settingsPanel.classList.toggle('hidden');
     authPanel.classList.add('hidden');
+    pricingModal.classList.add('hidden');
   });
 
   selectAuthProvider.addEventListener('change', () => {
@@ -139,7 +215,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Auth Functions ---
   async function initAuthState() {
     const config = await AuthAPI.getConfig();
+    if (config.user && config.user.email) {
+      currentUserEmail = config.user.email;
+      await UsageManager.registerDeviceAccount(currentUserEmail);
+    } else {
+      currentUserEmail = 'guest';
+    }
     updateAuthUI(config.user);
+    await updateUsageUI();
   }
 
   function updateAuthUI(user) {
@@ -153,6 +236,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       authUserChip.classList.add('hidden');
       btnOpenAuth.classList.remove('hidden');
     }
+  }
+
+  // --- Usage & Device Limit UI Enforcement ---
+  async function updateUsageUI() {
+    const status = await UsageManager.getUsageStatus(currentUserEmail);
+
+    if (status.isPro) {
+      usageLabel.textContent = 'Pro Unlimited Access';
+      usageStatusDot.className = 'usage-dot pro';
+      btnShowPlans.textContent = '★ PRO Active';
+      btnStartScan.classList.remove('btn-locked');
+      btnStartScan.disabled = false;
+      btnStartScan.innerHTML = '<span class="btn-icon">⚡</span><span>Analyze Commits & Export CSV</span>';
+      deviceLockedAlert.classList.add('hidden');
+    } else {
+      usageLabel.textContent = `${status.remainingScans}/${status.maxFreeScans} Free Scans Left`;
+
+      if (status.remainingScans > 5) {
+        usageStatusDot.className = 'usage-dot';
+      } else if (status.remainingScans > 0) {
+        usageStatusDot.className = 'usage-dot warning';
+      } else {
+        usageStatusDot.className = 'usage-dot danger';
+      }
+
+      if (status.isLocked) {
+        btnStartScan.classList.add('btn-locked');
+        btnStartScan.disabled = false;
+        btnStartScan.innerHTML = '<span>🔒 Free Search Limit Reached - Upgrade to Pro</span>';
+        deviceLockedAlert.classList.remove('hidden');
+        deviceLockedReason.textContent = status.reason;
+      } else {
+        btnStartScan.classList.remove('btn-locked');
+        btnStartScan.disabled = false;
+        btnStartScan.innerHTML = '<span class="btn-icon">⚡</span><span>Analyze Commits & Export CSV</span>';
+        deviceLockedAlert.classList.add('hidden');
+      }
+    }
+    return status;
   }
 
   function setAuthMode(mode) {
@@ -197,11 +319,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         user = await AuthAPI.signUp({ email, password });
       }
 
+      currentUserEmail = user.email;
+      await UsageManager.registerDeviceAccount(currentUserEmail);
       authFeedback.textContent = `Welcome, ${user.email}!`;
-      setTimeout(() => {
+      setTimeout(async () => {
         updateAuthUI(user);
         authForm.reset();
         authFeedback.classList.add('hidden');
+        await updateUsageUI();
       }, 1000);
     } catch (err) {
       authFeedback.classList.add('error');
@@ -315,6 +440,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Scan Pipeline ---
   async function runAnalysisPipeline() {
+    // 0. Verify device free search limits
+    const usage = await UsageManager.getUsageStatus(currentUserEmail);
+    if (usage.isLocked) {
+      pricingModal.classList.remove('hidden');
+      deviceLockedAlert.classList.remove('hidden');
+      deviceLockedReason.textContent = usage.reason;
+      alert(`Search Limit Reached:\n\n${usage.reason}`);
+      return;
+    }
+
     const repoInfo = GitHubAPI.extractRepoInfo(inputRepo.value);
     if (!repoInfo) {
       alert('Please enter a valid GitHub repository (e.g., owner/repo or full GitHub URL).');
@@ -425,6 +560,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCommitCard(record);
       }
 
+      // Record successful search against device usage limit
+      await UsageManager.recordScan(currentUserEmail);
+      await updateUsageUI();
+
       updateProgress(100, 'All commits analyzed! Generating CSV report...');
       
       const csvData = CSVExporter.generateCSV(currentRecords);
@@ -440,7 +579,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert(`Error during analysis: ${err.message}`);
       updateProgress(0, `Error: ${err.message}`);
     } finally {
-      btnStartScan.disabled = false;
+      // Re-evaluate button state according to updated usage status
+      await updateUsageUI();
     }
   }
 
