@@ -12,7 +12,14 @@ authors = [{ name = "Anshuman Tiwari" }]
 license = { text = "MIT" }
 dependencies = [
     "requests>=2.32,<3",
+    "razorpay>=2.0.1",
+    "flask>=3.0.0",
+    "flask-cors>=6.0.0",
+    "python-dotenv>=1.0.0",
 ]
+
+[tool.vercel]
+entrypoint = "api/index.py:app"
 
 [project.optional-dependencies]
 dev = [
