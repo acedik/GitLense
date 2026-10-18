@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitLense - Commit Plagiarism Checker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Ambient Glassmorphism Glow Background -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header glass-card">
+      <div class="logo-group">
+        <div class="icon-glow-wrapper">
+          <img src="../icons/icon48.png" alt="GitLense" class="app-icon">
+        </div>
+        <div>
+          <h1 class="app-title">GitLense</h1>
+          <p class="app-subtitle">AI Plagiarism & Integrity</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Auth User Chip (Populated via JS) -->
+        <div id="auth-user-chip" class="auth-chip hidden">
+          <span class="user-avatar-initial" id="user-avatar-initial">U</span>
+          <span class="user-email-text" id="user-email-text">user@example.com</span>
+          <button id="btn-sign-out" class="btn-logout" title="Sign Out">✕</button>
+        </div>
+
+        <button id="btn-open-auth" class="btn-glass-sm" title="Sign In / Register">Sign In</button>
+        <button id="btn-toggle-settings" class="icon-button" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Auth Modal / Overlay -->
+    <section id="auth-panel" class="auth-panel glass-card hidden">
+      <div class="auth-tabs">
+        <button id="tab-sign-in" class="auth-tab active">Sign In</button>
+        <button id="tab-sign-up" class="auth-tab">Create Account</button>
+      </div>
+
+      <form id="auth-form" class="auth-form">
+        <div class="form-group">
+          <label for="auth-email">Email Address</label>
+          <input type="email" id="auth-email" placeholder="alex@company.com" required spellcheck="false">
+        </div>
+
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" placeholder="At least 6 characters" required>
+        </div>
+
+        <div id="auth-confirm-group" class="form-group hidden">
+          <label for="auth-confirm-password">Confirm Password</label>
+          <input type="password" id="auth-confirm-password" placeholder="Re-enter password">
+        </div>
+
+        <button type="submit" id="btn-auth-submit" class="btn-primary w-full">
+          <span id="auth-submit-label">Sign In</span>
+        </button>
+
+        <div id="auth-feedback" class="feedback-text hidden"></div>
+
+        <div class="auth-footer-links">
+          <button type="button" id="btn-dismiss-auth" class="link-btn">Continue as Guest</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Repository Detection Card -->
+    <section class="repo-card glass-card">
+      <div class="repo-badge-row">
+        <span class="status-indicator" id="repo-status-indicator"></span>
+        <span class="label">Target Repository</span>
+      </div>
+      <div class="repo-input-wrapper">
+        <input type="text" id="input-repo" placeholder="owner/repo or GitHub URL" spellcheck="false">
+        <button id="btn-detect-tab" class="btn-glass-sm" title="Detect from active tab">Current Tab</button>
+      </div>
+    </section>
+
+    <!-- Settings Panel (Collapsible Glass) -->
+    <section id="settings-panel" class="settings-panel glass-card hidden">
+      <div class="settings-header">
+        <h2 class="section-title">Configuration & Cloud API</h2>
+      </div>
+
+      <!-- Auth Backend Provider Selection -->
+      <div class="form-group">
+        <label for="select-auth-provider">Authentication API Provider</label>
+        <select id="select-auth-provider">
+          <option value="local" selected>Local Storage / Demo Auth</option>
+          <option value="supabase">Supabase Auth (REST API)</option>
+          <option value="firebase">Firebase Auth (Identity Toolkit)</option>
+        </select>
+      </div>
+
+      <!-- Supabase Config Fields -->
+      <div id="supabase-config-fields" class="provider-fields hidden">
+        <div class="form-group">
+          <label for="input-supabase-url">Supabase Project URL</label>
+          <input type="text" id="input-supabase-url" placeholder="https://xyzcompany.supabase.co" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label for="input-supabase-key">Supabase Anon Key</label>
+          <input type="password" id="input-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." spellcheck="false">
+        </div>
+      </div>
+
+      <!-- Firebase Config Fields -->
+      <div id="firebase-config-fields" class="provider-fields hidden">
+        <div class="form-group">
+          <label for="input-firebase-key">Firebase Web API Key</label>
+          <input type="password" id="input-firebase-key" placeholder="AIzaSy..." spellcheck="false">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="input-gemini-key">
+          Gemini API Key <span class="required">*</span>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="help-link">Get Free Key ↗</a>
+        </label>
+        <div class="password-wrapper">
+          <input type="password" id="input-gemini-key" placeholder="AIzaSy..." spellcheck="false">
+          <button type="button" id="btn-toggle-key-visibility" class="btn-toggle-pw" title="Show/Hide">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="input-github-token">
+          GitHub Personal Access Token <span class="optional">(Optional)</span>
+          <a href="https://github.com/settings/tokens" target="_blank" class="help-link">Get Token ↗</a>
+        </label>
+        <input type="password" id="input-github-token" placeholder="ghp_... (5,000 req/hr rate limit)" spellcheck="false">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="select-commit-count">Commits to Scan</label>
+          <select id="select-commit-count">
+            <option value="5" selected>Last 5 commits</option>
+            <option value="10">Last 10 commits</option>
+            <option value="20">Last 20 commits</option>
+            <option value="50">Last 50 commits</option>
+          </select>
+        </div>
+
+        <div class="form-group flex-1">
+          <label for="select-model">Gemini Model</label>
+          <select id="select-model">
+            <option value="gemini-flash-latest" selected>gemini-flash-latest (Recommended)</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+            <option value="gemini-1.5-pro">gemini-1.5-pro (Deep)</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-save-settings" class="btn-secondary w-full">Save Settings</button>
+      <div id="settings-saved-feedback" class="feedback-text hidden">✓ Settings saved successfully</div>
+    </section>
+
+    <!-- Main Actions -->
+    <section class="action-section">
+      <button id="btn-start-scan" class="btn-primary w-full">
+        <span class="btn-icon">⚡</span>
+        <span>Analyze Commits & Export CSV</span>
+      </button>
+    </section>
+
+    <!-- Progress / Status Section -->
+    <section id="progress-section" class="progress-section glass-card hidden">
+      <div class="progress-header">
+        <span id="progress-status-label" class="progress-status">Initializing...</span>
+        <span id="progress-percentage" class="progress-percentage">0%</span>
+      </div>
+      <div class="progress-bar-container">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results-section" class="results-section hidden">
+      <div class="results-header">
+        <h2 class="section-title">Integrity Report</h2>
+        <button id="btn-download-csv" class="btn-download" title="Download CSV report">
+          📥 Download CSV
+        </button>
+      </div>
+
+      <!-- Summary Stats Badges -->
+      <div class="stats-grid">
+        <div class="stat-card glass-card">
+          <span class="stat-num" id="stat-total">0</span>
+          <span class="stat-label">Scanned</span>
+        </div>
+        <div class="stat-card glass-card stat-original">
+          <span class="stat-num" id="stat-original">0</span>
+          <span class="stat-label">Original</span>
+        </div>
+        <div class="stat-card glass-card stat-suspicious">
+          <span class="stat-num" id="stat-suspicious">0</span>
+          <span class="stat-label">Suspicious</span>
+        </div>
+        <div class="stat-card glass-card stat-plagiarized">
+          <span class="stat-num" id="stat-plagiarized">0</span>
+          <span class="stat-label">Plagiarized</span>
+        </div>
+      </div>
+
+      <!-- Commit Items List -->
+      <div id="results-list" class="results-list"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>GitLense v1.1.0</span>
+      <span>•</span>
+      <span>Gemini AI Engine</span>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../lib/auth_api.js"></script>
+  <script src="../lib/github_api.js"></script>
+  <script src="../lib/gemini_api.js"></script>
+  <script src="../lib/csv_exporter.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
