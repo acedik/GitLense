@@ -1,5 +1,5 @@
-/* GitLense In-page Button & Modal for GitHub */
-.gitlense-gh-btn {
+/* chitgit In-page Button & Modal for GitHub */
+.chitgit-gh-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -17,18 +17,18 @@
   vertical-align: middle;
 }
 
-.gitlense-gh-btn:hover {
+.chitgit-gh-btn:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
 }
 
-.gitlense-icon {
+.chitgit-icon {
   font-size: 13px;
 }
 
 /* Modal Overlay on GitHub */
-.gitlense-overlay {
+.chitgit-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -42,7 +42,7 @@
   justify-content: center;
 }
 
-.gitlense-modal {
+.chitgit-modal {
   background: #1e293b;
   color: #f8fafc;
   border: 1px solid #334155;
@@ -58,7 +58,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.gitlense-modal-header {
+.chitgit-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -66,13 +66,13 @@
   padding-bottom: 10px;
 }
 
-.gitlense-modal-title {
+.chitgit-modal-title {
   font-size: 16px;
   font-weight: 700;
   color: #f8fafc;
 }
 
-.gitlense-modal-close {
+.chitgit-modal-close {
   background: transparent;
   border: none;
   color: #94a3b8;
@@ -80,11 +80,11 @@
   cursor: pointer;
 }
 
-.gitlense-modal-close:hover {
+.chitgit-modal-close:hover {
   color: #f8fafc;
 }
 
-.gitlense-modal-body {
+.chitgit-modal-body {
   font-size: 13px;
   color: #cbd5e1;
   line-height: 1.5;

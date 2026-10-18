@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "GitLense - Commit Plagiarism & CSV Exporter",
+  "name": "chitgit - Commit Plagiarism & CSV Exporter",
   "version": "1.0.0",
   "description": "Inspect GitHub commits for code plagiarism using Google Gemini AI and export detailed CSV reports.",
   "icons": {
@@ -23,7 +23,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "GitLense - Commit Plagiarism Checker",
+    "default_title": "chitgit - Commit Plagiarism Checker",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

@@ -1,5 +1,5 @@
 /**
- * GitLense Background Service Worker (Manifest V3)
+ * chitgit Background Service Worker (Manifest V3)
  */
 
 const DEFAULT_CONFIG = {
@@ -21,7 +21,7 @@ chrome.runtime.onInstalled.addListener((details) => {
       chrome.storage.local.set(toSet);
     }
   });
-  console.log('GitLense extension installed successfully with default Gemini configuration.');
+  console.log('chitgit extension installed successfully with default Gemini configuration.');
 });
 
 // Listener for runtime messages

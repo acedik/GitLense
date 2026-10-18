@@ -1,11 +1,11 @@
 /**
- * GitLense GitHub Content Script
+ * chitgit GitHub Content Script
  * Injects one-click plagiarism analysis button directly into GitHub repository pages.
  */
 (() => {
   // Prevent duplicate injections
-  if (window.__gitlense_injected) return;
-  window.__gitlense_injected = true;
+  if (window.__chitgit_injected) return;
+  window.__chitgit_injected = true;
 
   function getRepoInfo() {
     const parts = window.location.pathname.split('/').filter(Boolean);
@@ -21,11 +21,11 @@
     return null;
   }
 
-  function injectGitLenseButton() {
+  function injectChitGitButton() {
     const repoInfo = getRepoInfo();
     if (!repoInfo) return;
 
-    if (document.getElementById('gitlense-btn-injected')) return;
+    if (document.getElementById('chitgit-btn-injected')) return;
 
     // Candidates for injection point on GitHub
     const targets = [
@@ -41,9 +41,9 @@
     if (!target) return;
 
     const btn = document.createElement('button');
-    btn.id = 'gitlense-btn-injected';
-    btn.className = 'gitlense-gh-btn';
-    btn.innerHTML = `<span class="gitlense-icon">⚡</span><span>GitLense Plagiarism Scan</span>`;
+    btn.id = 'chitgit-btn-injected';
+    btn.className = 'chitgit-gh-btn';
+    btn.innerHTML = `<span class="chitgit-icon">⚡</span><span>chitgit Plagiarism Scan</span>`;
     btn.title = `Scan commits for plagiarism and export CSV for ${repoInfo.owner}/${repoInfo.repo}`;
 
     btn.addEventListener('click', (e) => {
@@ -56,28 +56,28 @@
   }
 
   function openQuickModal(repoInfo) {
-    if (document.getElementById('gitlense-quick-modal')) return;
+    if (document.getElementById('chitgit-quick-modal')) return;
 
     const overlay = document.createElement('div');
-    overlay.id = 'gitlense-quick-modal';
-    overlay.className = 'gitlense-overlay';
+    overlay.id = 'chitgit-quick-modal';
+    overlay.className = 'chitgit-overlay';
 
     overlay.innerHTML = `
-      <div class="gitlense-modal">
-        <div class="gitlense-modal-header">
+      <div class="chitgit-modal">
+        <div class="chitgit-modal-header">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:18px;">⚡</span>
-            <span class="gitlense-modal-title">GitLense Plagiarism Checker</span>
+            <span class="chitgit-modal-title">chitgit Plagiarism Checker</span>
           </div>
-          <button class="gitlense-modal-close" id="gitlense-close-btn">&times;</button>
+          <button class="chitgit-modal-close" id="chitgit-close-btn">&times;</button>
         </div>
-        <div class="gitlense-modal-body">
+        <div class="chitgit-modal-body">
           <p>Ready to inspect commits and detect code plagiarism for:</p>
           <p style="margin: 8px 0; font-family: monospace; font-size: 14px; color: #a5b4fc; background: #0f172a; padding: 6px 10px; border-radius: 6px;">
             ${repoInfo.owner}/${repoInfo.repo}
           </p>
           <p style="margin-top: 10px;">
-            Click the <strong>GitLense icon</strong> in your Chrome extension toolbar (top right) to configure your Gemini API Key, customize commit depth, and download the full <strong>CSV report</strong>.
+            Click the <strong>chitgit icon</strong> in your Chrome extension toolbar (top right) to configure your Gemini API Key, customize commit depth, and download the full <strong>CSV report</strong>.
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@
 
     document.body.appendChild(overlay);
 
-    const closeBtn = document.getElementById('gitlense-close-btn');
+    const closeBtn = document.getElementById('chitgit-close-btn');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => overlay.remove());
     }
@@ -95,16 +95,16 @@
   }
 
   // Initial attempt
-  injectGitLenseButton();
+  injectChitGitButton();
 
   // Handle GitHub Turbo / soft page transitions
-  document.addEventListener('turbo:load', injectGitLenseButton);
-  document.addEventListener('turbo:render', injectGitLenseButton);
-  document.addEventListener('pjax:end', injectGitLenseButton);
+  document.addEventListener('turbo:load', injectChitGitButton);
+  document.addEventListener('turbo:render', injectChitGitButton);
+  document.addEventListener('pjax:end', injectChitGitButton);
 
   const observer = new MutationObserver(() => {
-    if (!document.getElementById('gitlense-btn-injected')) {
-      injectGitLenseButton();
+    if (!document.getElementById('chitgit-btn-injected')) {
+      injectChitGitButton();
     }
   });
 

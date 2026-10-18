@@ -1,5 +1,5 @@
 /**
- * GitLense Google Gemini AI Plagiarism Detection Client
+ * chitgit Google Gemini AI Plagiarism Detection Client
  */
 const GeminiAPI = {
   DEFAULT_MODEL: 'gemini-flash-latest',

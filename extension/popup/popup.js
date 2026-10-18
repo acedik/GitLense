@@ -1,5 +1,5 @@
 /**
- * GitLense Popup Controller
+ * chitgit Popup Controller
  * Manages Glassmorphism UI, Auth State (Supabase / Firebase / Local), Scan Pipeline & CSV Export.
  */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -131,8 +131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnDownloadCSV.addEventListener('click', async () => {
     if (currentRecords.length === 0) return;
     const csvContent = CSVExporter.generateCSV(currentRecords);
-    const repoSlug = currentRepoInfo ? `${currentRepoInfo.owner}_${currentRepoInfo.repo}` : 'gitlense';
-    const filename = `gitlense_${repoSlug}_plagiarism_${new Date().toISOString().slice(0, 10)}.csv`;
+    const repoSlug = currentRepoInfo ? `${currentRepoInfo.owner}_${currentRepoInfo.repo}` : 'chitgit';
+    const filename = `chitgit_${repoSlug}_plagiarism_${new Date().toISOString().slice(0, 10)}.csv`;
     await CSVExporter.downloadCSV(csvContent, filename);
   });
 
@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateProgress(100, 'All commits analyzed! Generating CSV report...');
       
       const csvData = CSVExporter.generateCSV(currentRecords);
-      const filename = `gitlense_${repoInfo.owner}_${repoInfo.repo}_plagiarism_${new Date().toISOString().slice(0, 10)}.csv`;
+      const filename = `chitgit_${repoInfo.owner}_${repoInfo.repo}_plagiarism_${new Date().toISOString().slice(0, 10)}.csv`;
       await CSVExporter.downloadCSV(csvData, filename);
 
       setTimeout(() => {

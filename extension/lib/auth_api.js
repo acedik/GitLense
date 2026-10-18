@@ -1,5 +1,5 @@
 /**
- * GitLense Authentication Client
+ * chitgit Authentication Client
  * Supports Supabase Auth & Firebase Auth REST endpoints with local fallback.
  */
 const AuthAPI = {

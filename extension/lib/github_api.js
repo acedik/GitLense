@@ -1,5 +1,5 @@
 /**
- * GitLense GitHub REST API Client
+ * chitgit GitHub REST API Client
  */
 const GitHubAPI = {
   /**

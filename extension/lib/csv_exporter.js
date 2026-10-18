@@ -1,5 +1,5 @@
 /**
- * GitLense CSV Exporter
+ * chitgit CSV Exporter
  * Generates RFC 4180-compliant CSV files from commit plagiarism analysis results.
  */
 const CSVExporter = {
@@ -81,7 +81,7 @@ const CSVExporter = {
    * Triggers download of the CSV file.
    * Supports both Chrome Extension downloads API and standard browser Blob download.
    */
-  async downloadCSV(csvContent, filename = 'gitlense_plagiarism_report.csv') {
+  async downloadCSV(csvContent, filename = 'chitgit_plagiarism_report.csv') {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
     // Method 1: Chrome Downloads API (available in extension context)
