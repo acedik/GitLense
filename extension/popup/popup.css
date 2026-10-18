@@ -1179,6 +1179,28 @@ select:focus {
   justify-content: center;
 }
 
+.rzp-web-btn {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  font-size: 11px;
+}
+
+.rzp-web-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.15);
+}
+
 .upi-qr-box {
   display: flex;
   flex-direction: column;

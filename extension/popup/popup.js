@@ -227,7 +227,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     licenseFeedback.className = 'feedback-text';
     const isUtr = /^\d{12}$/.test(key);
-    if (isUtr) {
+    const isRazorpayPayId = key.startsWith('pay_');
+
+    if (isRazorpayPayId) {
+      licenseFeedback.textContent = 'Verifying Razorpay payment ID...';
+    } else if (isUtr) {
       licenseFeedback.textContent = 'Verifying UPI UTR reference with payment registry...';
     } else {
       licenseFeedback.textContent = 'Verifying license with device signature...';
@@ -237,9 +241,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await UsageManager.upgradeToPro(key);
     await updateUsageUI();
 
-    licenseFeedback.textContent = isUtr 
-      ? '✓ UPI Payment confirmed! Pro plan unlocked successfully.' 
-      : '✓ Pro plan unlocked successfully! Enjoy unlimited searches.';
+    if (isRazorpayPayId) {
+      licenseFeedback.textContent = '✓ Razorpay Payment confirmed! Pro plan unlocked successfully.';
+    } else if (isUtr) {
+      licenseFeedback.textContent = '✓ UPI Payment confirmed! Pro plan unlocked successfully.';
+    } else {
+      licenseFeedback.textContent = '✓ Pro plan unlocked successfully! Enjoy unlimited searches.';
+    }
     setTimeout(() => {
       pricingModal.classList.add('hidden');
       licenseFeedback.classList.add('hidden');
