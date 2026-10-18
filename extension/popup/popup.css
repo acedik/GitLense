@@ -1,19 +1,20 @@
-/* chitgit Minimal Glassmorphism Design System */
+/* chitgit Minimal Matte Black & Crisp White Glassmorphism Design System */
 :root {
-  --bg-canvas: #090d16;
-  --glass-bg: rgba(22, 30, 48, 0.62);
-  --glass-bg-hover: rgba(30, 41, 64, 0.75);
-  --glass-input: rgba(11, 15, 25, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-border-focus: rgba(99, 102, 241, 0.6);
-  --glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+  --bg-canvas: #09090b;
+  --glass-bg: rgba(18, 18, 22, 0.72);
+  --glass-bg-hover: rgba(28, 28, 34, 0.82);
+  --glass-input: rgba(12, 12, 15, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-focus: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
 
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  --accent-glow: rgba(99, 102, 241, 0.35);
+  --accent-white: #ffffff;
+  --accent-gradient: linear-gradient(180deg, #ffffff 0%, #d4d4d8 100%);
+  --accent-glow: rgba(255, 255, 255, 0.22);
   
   --success: #10b981;
   --success-glow: rgba(16, 185, 129, 0.18);
@@ -21,7 +22,7 @@
   --warning-glow: rgba(245, 158, 11, 0.18);
   --danger: #ef4444;
   --danger-glow: rgba(239, 68, 68, 0.18);
-  --info: #38bdf8;
+  --info: #e4e4e7;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -45,30 +46,30 @@ body {
   position: relative;
 }
 
-/* Ambient Blurred Glow Orbs */
+/* Ambient Lunar Shimmer Orbs (Monochrome) */
 .ambient-glow {
   position: fixed;
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
-  filter: blur(75px);
-  opacity: 0.5;
+  filter: blur(80px);
+  opacity: 0.35;
 }
 
 .glow-top-left {
   top: -40px;
   left: -40px;
-  width: 180px;
-  height: 180px;
-  background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
 }
 
 .glow-bottom-right {
   bottom: -40px;
   right: -40px;
-  width: 190px;
-  height: 190px;
-  background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
 }
 
 .app-container {
@@ -80,15 +81,21 @@ body {
   gap: 13px;
 }
 
-/* Glass Card Utility */
+/* Glass Card Utility with Specular Top Highlight */
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   box-shadow: var(--glass-shadow);
   transition: all 0.25s ease;
+  position: relative;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* Header */
@@ -96,7 +103,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  padding: 11px 14px;
 }
 
 .logo-group {
@@ -118,9 +125,9 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--accent-gradient);
-  filter: blur(8px);
-  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.3);
+  filter: blur(9px);
+  opacity: 0.6;
   z-index: -1;
 }
 
@@ -128,15 +135,17 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 7px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .app-title {
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  background: var(--accent-gradient);
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  background: linear-gradient(180deg, #ffffff 20%, #a1a1aa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .app-subtitle {
@@ -155,7 +164,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--glass-border);
   padding: 3px 8px 3px 4px;
   border-radius: 999px;
@@ -166,13 +175,14 @@ body {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--accent-gradient);
-  color: #fff;
+  background: #ffffff;
+  color: #09090b;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 10px;
+  box-shadow: 0 1px 4px rgba(255, 255, 255, 0.3);
 }
 
 .user-email-text {
@@ -209,27 +219,30 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .btn-glass-sm:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .icon-button {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--glass-border);
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
   padding: 5px 7px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .icon-button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--text-primary);
-  border-color: var(--glass-border-focus);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* Auth Panel */
@@ -243,10 +256,10 @@ body {
 
 .auth-tabs {
   display: flex;
-  background: rgba(11, 15, 25, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  padding: 2px;
+  padding: 3px;
 }
 
 .auth-tab {
@@ -263,10 +276,10 @@ body {
 }
 
 .auth-tab.active {
-  background: var(--accent-gradient);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px var(--accent-glow);
+  background: #ffffff;
+  color: #09090b;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.25);
 }
 
 .auth-form {
@@ -291,7 +304,7 @@ body {
 }
 
 .link-btn:hover {
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 /* Repository Card */
@@ -322,8 +335,8 @@ body {
 }
 
 .status-indicator.detected {
-  background: var(--success);
-  box-shadow: 0 0 8px var(--success-glow);
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
 .repo-input-wrapper {
@@ -357,7 +370,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: rgba(11, 15, 25, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   padding: 10px;
   border-radius: var(--radius-sm);
   border: 1px dashed var(--glass-border);
@@ -386,10 +399,12 @@ body {
 
 .help-link:hover {
   text-decoration: underline;
+  color: #ffffff;
 }
 
 .required {
-  color: var(--danger);
+  color: #ffffff;
+  font-weight: bold;
 }
 
 .optional {
@@ -417,6 +432,7 @@ body {
   cursor: pointer;
   font-size: 12px;
   opacity: 0.7;
+  color: #fff;
 }
 
 input[type="text"],
@@ -430,13 +446,14 @@ select {
   font-size: 12px;
   color: var(--text-primary);
   transition: all 0.2s;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 input:focus,
 select:focus {
   outline: none;
   border-color: var(--glass-border-focus);
-  box-shadow: 0 0 10px var(--accent-glow);
+  box-shadow: 0 0 10px var(--accent-glow), inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .form-row {
@@ -461,10 +478,12 @@ select:focus {
   padding: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .feedback-text {
@@ -477,27 +496,59 @@ select:focus {
   color: var(--danger);
 }
 
-/* Main Action Button */
+/* =========================================================
+   Shine Sweep Effect & Primary Action Button
+========================================================= */
+@keyframes shine-sweep {
+  0% {
+    transform: translateX(-160%) skewX(-20deg);
+  }
+  30%, 100% {
+    transform: translateX(260%) skewX(-20deg);
+  }
+}
+
 .btn-primary {
-  background: var(--accent-gradient);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #e4e4e7 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: var(--radius-md);
-  color: #ffffff;
+  color: #09090b;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 12px 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 6px 20px var(--accent-glow);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.22), inset 0 1px 0 #ffffff;
   transition: all 0.2s ease;
+}
+
+/* The Animated Diagonal Specular Shine Ray */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-20deg);
+  animation: shine-sweep 4s infinite ease-in-out;
+  pointer-events: none;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 26px rgba(255, 255, 255, 0.35), inset 0 1px 0 #ffffff;
 }
 
 .btn-primary:active:not(:disabled) {
@@ -505,7 +556,7 @@ select:focus {
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -540,18 +591,21 @@ select:focus {
 
 .progress-bar-container {
   height: 6px;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.6);
   border-radius: 999px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .progress-bar-fill {
   height: 100%;
   width: 0%;
-  background: var(--accent-gradient);
-  box-shadow: 0 0 10px var(--accent-glow);
+  background: linear-gradient(90deg, #71717a 0%, #ffffff 50%, #71717a 100%);
+  background-size: 200% 100%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   border-radius: 999px;
   transition: width 0.3s ease;
+  animation: shine-sweep 2.5s infinite linear;
 }
 
 /* Results Section */
@@ -568,21 +622,21 @@ select:focus {
 }
 
 .btn-download {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: #ffffff;
+  color: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: var(--radius-sm);
   padding: 5px 10px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 0 10px var(--success-glow);
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.25);
 }
 
 .btn-download:hover {
-  background: rgba(16, 185, 129, 0.35);
-  border-color: #34d399;
+  background: #e4e4e7;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.4);
 }
 
 /* Stats Grid */
@@ -598,11 +652,12 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  background: rgba(14, 14, 18, 0.75);
 }
 
 .stat-num {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   font-family: monospace;
 }
 
@@ -632,15 +687,16 @@ select:focus {
 }
 
 .results-list::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 
 .commit-card {
-  padding: 10px;
+  padding: 11px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  background: rgba(14, 14, 18, 0.72);
 }
 
 .commit-header {
@@ -651,14 +707,14 @@ select:focus {
 
 .commit-sha-link {
   font-family: monospace;
-  font-weight: 600;
-  color: var(--info);
-  text-decoration: none;
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: underline;
   font-size: 11px;
 }
 
 .commit-sha-link:hover {
-  text-decoration: underline;
+  color: #d4d4d8;
 }
 
 .verdict-badge {
@@ -671,27 +727,27 @@ select:focus {
 }
 
 .verdict-ORIGINAL {
-  background: var(--success-glow);
+  background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 .verdict-SUSPICIOUS {
-  background: var(--warning-glow);
+  background: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
   border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .verdict-PLAGIARIZED {
-  background: var(--danger-glow);
+  background: rgba(239, 68, 68, 0.15);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 .verdict-BOILERPLATE_OR_LIBRARY {
-  background: var(--accent-glow);
-  color: #c7d2fe;
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .commit-msg {
@@ -713,10 +769,10 @@ select:focus {
 .commit-reasoning {
   font-size: 11px;
   color: var(--text-secondary);
-  background: rgba(11, 15, 25, 0.45);
+  background: rgba(8, 8, 10, 0.6);
   padding: 6px 8px;
   border-radius: 6px;
-  border-left: 2px solid rgba(99, 102, 241, 0.5);
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
   line-height: 1.4;
   margin-top: 3px;
 }
@@ -724,7 +780,7 @@ select:focus {
 .commit-snippets {
   font-family: monospace;
   font-size: 10px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   color: #fca5a5;
   padding: 6px;
   border-radius: 6px;
