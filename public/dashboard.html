@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>chitgit Cloud Dashboard & Setup Hub</title>
+  <meta name="description" content="AI GitHub Commit Plagiarism Checker & Cloud Dashboard powered by Supabase, Google Gemini, and Vercel.">
+  <!-- Supabase JS Client via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-matte: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.7);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #ffffff;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-matte);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.1;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-top-left {
+      top: -150px;
+      left: -100px;
+      background: radial-gradient(circle, #ffffff 0%, rgba(255, 255, 255, 0) 70%);
+    }
+
+    .glow-bottom-right {
+      bottom: -150px;
+      right: -100px;
+      background: radial-gradient(circle, #a1a1aa 0%, rgba(161, 161, 170, 0) 70%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 30px 20px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      margin-bottom: 30px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: #ffffff;
+      color: #09090b;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(180deg, #ffffff 0%, #e4e4e7 100%);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: var(--radius-sm);
+      color: #09090b;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 18px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* System Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+    }
+
+    .status-items {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Main Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Section Headings */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    /* Scans Table */
+    .scans-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .scans-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .scans-table th {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--card-border);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .scans-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+    }
+
+    .badge-verdict {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .verdict-original {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .verdict-suspicious {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .verdict-plagiarized {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Tabs Component */
+    .tabs-header {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px 0;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: #ffffff;
+      border-bottom-color: #ffffff;
+    }
+
+    .tab-content {
+      padding: 20px;
+    }
+
+    /* Code Box */
+    .code-box {
+      background: #000000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: "SF Mono", Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #e4e4e7;
+      overflow-x: auto;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .btn-copy-code {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .btn-copy-code:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Auth Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 28px;
+      background: #121214;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .form-group input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .otp-input {
+      font-family: monospace !important;
+      font-size: 22px !important;
+      letter-spacing: 8px !important;
+      text-align: center !important;
+    }
+
+    .feedback-box {
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+    }
+
+    .feedback-box.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .feedback-box.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <div class="container">
+    <!-- Navbar -->
+    <header class="navbar glass-card">
+      <div class="brand-group">
+        <div class="logo-badge">cg</div>
+        <div class="brand-text">
+          <h1>chitgit</h1>
+          <p>Cloud AI Integrity & Plagiarism Dashboard</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Auth User Chip -->
+        <div id="user-chip" class="hidden">
+          <span id="user-email" style="font-size:12.5px;color:#a1a1aa;margin-right:10px;">user@example.com</span>
+          <button id="btn-logout" class="btn-secondary" style="padding:6px 12px;font-size:11.5px;">Sign Out</button>
+        </div>
+        <button id="btn-open-otp-login" class="btn-primary">⚡ Sign In with OTP</button>
+        <a href="https://github.com/acedik/GitLense" target="_blank" class="btn-secondary">GitHub ↗</a>
+      </div>
+    </header>
+
+    <!-- System Status Bar -->
+    <div class="status-bar glass-card">
+      <div class="status-items">
+        <div class="status-item">
+          <span class="status-dot"></span>
+          <span><strong>Vercel Serverless:</strong> Online (Edge Active)</span>
+        </div>
+        <div class="status-item">
+          <span class="status-dot" id="dot-gemini"></span>
+          <span id="label-gemini"><strong>Gemini AI Engine:</strong> Hidden Key Active</span>
+        </div>
+        <div class="status-item">
+          <span class="status-dot" id="dot-supabase"></span>
+          <span id="label-supabase"><strong>Supabase DB:</strong> Ready</span>
+        </div>
+      </div>
+      <div>
+        <a href="https://acedik.github.io/GitLense/chitgit_chrome_extension.zip" download class="btn-secondary" style="font-size:12px;padding:6px 12px;">
+          📥 Download Extension (.zip)
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Metrics / KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card glass-card">
+        <span class="kpi-label">Total Commits Analyzed</span>
+        <span class="kpi-value" id="kpi-total">142</span>
+        <span class="kpi-sub">Across 18 repositories</span>
+      </div>
+      <div class="kpi-card glass-card">
+        <span class="kpi-label">Original & Verified</span>
+        <span class="kpi-value" style="color:#10b981;" id="kpi-original">119</span>
+        <span class="kpi-sub">83.8% repository health</span>
+      </div>
+      <div class="kpi-card glass-card">
+        <span class="kpi-label">Suspicious Snippets</span>
+        <span class="kpi-value" style="color:#f59e0b;" id="kpi-suspicious">17</span>
+        <span class="kpi-sub">Requires author review</span>
+      </div>
+      <div class="kpi-card glass-card">
+        <span class="kpi-label">Plagiarized Commits</span>
+        <span class="kpi-value" style="color:#ef4444;" id="kpi-plagiarized">6</span>
+        <span class="kpi-sub">Matches online solution templates</span>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-grid">
+      <!-- Left Column: Live Scan Feed -->
+      <section class="glass-card" style="padding: 24px;">
+        <div class="section-header">
+          <h2 class="section-title">⚡ Live Integrity Feed</h2>
+          <button id="btn-export-csv" class="btn-secondary" style="font-size:12px;padding:6px 12px;">📥 Export CSV</button>
+        </div>
+
+        <div class="scans-table-wrapper">
+          <table class="scans-table">
+            <thead>
+              <tr>
+                <th>Repository</th>
+                <th>Commit</th>
+                <th>Author</th>
+                <th>Verdict</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody id="scans-table-body">
+              <tr>
+                <td><strong>lukecybers/luke-test-</strong></td>
+                <td><code>7d8a92b</code></td>
+                <td>Luke Dev</td>
+                <td><span class="badge-verdict verdict-original">ORIGINAL</span></td>
+                <td><strong>8%</strong></td>
+              </tr>
+              <tr>
+                <td><strong>lukecybers/luke-test-</strong></td>
+                <td><code>f1c93a0</code></td>
+                <td>Luke Dev</td>
+                <td><span class="badge-verdict verdict-original">ORIGINAL</span></td>
+                <td><strong>4%</strong></td>
+              </tr>
+              <tr>
+                <td><strong>demo-student/hackathon-ai</strong></td>
+                <td><code>4a1b02e</code></td>
+                <td>Student A</td>
+                <td><span class="badge-verdict verdict-suspicious">SUSPICIOUS</span></td>
+                <td><strong>48%</strong></td>
+              </tr>
+              <tr>
+                <td><strong>demo-student/algo-hw</strong></td>
+                <td><code>b92c41f</code></td>
+                <td>Student B</td>
+                <td><span class="badge-verdict verdict-plagiarized">PLAGIARIZED</span></td>
+                <td><strong>92%</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right Column: API Key & Extension Link Guide -->
+      <section class="glass-card" style="padding: 24px;">
+        <h2 class="section-title" style="margin-bottom:14px;">🔒 Hidden Key Proxy</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+          Your Google Gemini API Key is kept 100% hidden on Vercel. Chrome extensions call this serverless backend directly without exposing secrets.
+        </p>
+
+        <div class="form-group">
+          <label>Your Vercel Backend Proxy URL:</label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="backend-url-display" readonly style="font-size:12px;" value="https://chitgit.vercel.app">
+            <button id="btn-copy-backend" class="btn-secondary" style="font-size:11px;padding:0 12px;">Copy</button>
+          </div>
+        </div>
+
+        <div style="background:rgba(16, 185, 129, 0.08);border:1px solid rgba(16, 185, 129, 0.2);border-radius:var(--radius-sm);padding:12px;margin-top:16px;">
+          <div style="font-size:12px;font-weight:700;color:#10b981;margin-bottom:4px;">✓ Zero-Fee Public Ready</div>
+          <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.4;">
+            Paste this URL into your Chrome Extension's settings to analyze commits with zero API key leaks!
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Setup Hub: Supabase & Vercel Integration Tabs -->
+    <section class="glass-card" style="margin-bottom: 24px;">
+      <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tab-supabase">📦 1. Supabase SQL Schema (1-Click)</button>
+        <button class="tab-btn" data-tab="tab-vercel">⚡ 2. Vercel Environment Variables</button>
+        <button class="tab-btn" data-tab="tab-extension">🔌 3. Extension Setup Guide</button>
+      </div>
+
+      <!-- Tab 1: Supabase Setup -->
+      <div id="tab-supabase" class="tab-content">
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:14px;">
+          Run this single SQL migration in your <strong>Supabase SQL Editor</strong> to create the tables for OTP authentication, user profiles, and scan logs:
+        </p>
+        <div class="code-box">
+          <button class="btn-copy-code" id="btn-copy-sql">📋 Copy SQL</button>
+          <pre id="sql-code">-- 1. Create User Profiles Table
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+    email TEXT NOT NULL,
+    tier TEXT DEFAULT 'free',
+    scans_remaining INT DEFAULT 20,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Create Scans Table for Plagiarism Audit Reports
+CREATE TABLE IF NOT EXISTS public.scans (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users ON DELETE SET NULL,
+    repo TEXT NOT NULL,
+    commit_sha TEXT NOT NULL,
+    commit_message TEXT,
+    author_name TEXT,
+    verdict TEXT NOT NULL,
+    plagiarism_score INT NOT NULL,
+    plagiarism_category TEXT,
+    flagged_snippets JSONB,
+    reasoning TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Enable Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scans ENABLE ROW LEVEL SECURITY;
+
+-- 4. Set RLS Policies
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Anyone can view scans" ON public.scans FOR SELECT USING (true);
+CREATE POLICY "Users can insert scans" ON public.scans FOR INSERT WITH CHECK (true);
+
+-- 5. Auto-create Profile Trigger upon Email OTP Sign Up
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email)
+  VALUES (new.id, new.email)
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();</pre>
+        </div>
+      </div>
+
+      <!-- Tab 2: Vercel Env Vars -->
+      <div id="tab-vercel" class="tab-content hidden">
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:16px;">
+          Add these 3 environment variables in <strong>Vercel Dashboard → Project Settings → Environment Variables</strong>:
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--card-border);padding:14px;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <code style="font-weight:700;color:#fff;">GEMINI_API_KEY</code>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Google Gemini API Key from aistudio.google.com (Kept 100% secret)</p>
+            </div>
+            <span style="font-size:11px;background:#10b981;color:#09090b;font-weight:700;padding:2px 8px;border-radius:4px;">REQUIRED</span>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--card-border);padding:14px;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <code style="font-weight:700;color:#fff;">SUPABASE_URL</code>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">https://kpuiszcppdmizpzaicab.supabase.co</p>
+            </div>
+            <span style="font-size:11px;background:#38bdf8;color:#09090b;font-weight:700;padding:2px 8px;border-radius:4px;">CONFIGURED</span>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--card-border);padding:14px;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <code style="font-weight:700;color:#fff;">SUPABASE_ANON_KEY</code>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5</p>
+            </div>
+            <span style="font-size:11px;background:#38bdf8;color:#09090b;font-weight:700;padding:2px 8px;border-radius:4px;">CONFIGURED</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Extension Setup -->
+      <div id="tab-extension" class="tab-content hidden">
+        <ol style="margin-left:20px;font-size:13.5px;color:var(--text-secondary);line-height:1.8;">
+          <li>Install the Chrome Extension using <strong>Load unpacked</strong>.</li>
+          <li>Click the <strong>Settings (⚙️)</strong> icon in the extension popup.</li>
+          <li>Under <strong>AI Plagiarism Engine Mode</strong>, select <strong>⚡ Vercel Backend Proxy (Key Hidden)</strong>.</li>
+          <li>Paste your Vercel deployment URL (e.g. <code>https://your-project.vercel.app</code>).</li>
+          <li>Under <strong>Authentication</strong>, enter your Supabase Project URL and Anon Key (or leave as local demo).</li>
+          <li>Click <strong>Save Settings</strong>. You are completely ready to analyze commits with zero API key leaks!</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <!-- OTP Login Modal -->
+  <div id="modal-otp" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:17px;font-weight:800;">⚡ Supabase Email OTP</h3>
+        <button id="btn-close-modal" style="background:none;border:none;color:#a1a1aa;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Step 1: Send OTP -->
+      <div id="modal-step-1">
+        <div class="form-group">
+          <label for="input-modal-email">Enter your Email</label>
+          <input type="email" id="input-modal-email" placeholder="alex@company.com">
+        </div>
+        <div id="modal-feedback-1" class="feedback-box hidden"></div>
+        <button id="btn-modal-send-otp" class="btn-primary" style="width:100%;justify-content:center;">Send 6-Digit OTP</button>
+      </div>
+
+      <!-- Step 2: Verify OTP -->
+      <div id="modal-step-2" class="hidden">
+        <p style="font-size:12px;color:#a1a1aa;margin-bottom:14px;">
+          Enter the 6-digit code sent to <strong id="modal-sent-to" style="color:#fff;">user@example.com</strong>
+        </p>
+        <div class="form-group">
+          <input type="text" id="input-modal-code" class="otp-input" placeholder="123456" maxlength="6">
+        </div>
+        <div id="modal-feedback-2" class="feedback-box hidden"></div>
+        <button id="btn-modal-verify-otp" class="btn-primary" style="width:100%;justify-content:center;">Verify & Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Controller Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Tab Switching
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const target = btn.getAttribute('data-tab');
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+          document.getElementById(target).classList.remove('hidden');
+        });
+      });
+
+      // 2. Copy Buttons
+      const btnCopySql = document.getElementById('btn-copy-sql');
+      if (btnCopySql) {
+        btnCopySql.addEventListener('click', () => {
+          navigator.clipboard.writeText(document.getElementById('sql-code').textContent);
+          btnCopySql.textContent = '✓ Copied!';
+          setTimeout(() => btnCopySql.textContent = '📋 Copy SQL', 2000);
+        });
+      }
+
+      const btnCopyBackend = document.getElementById('btn-copy-backend');
+      const backendUrlDisplay = document.getElementById('backend-url-display');
+      if (btnCopyBackend) {
+        backendUrlDisplay.value = window.location.origin;
+        btnCopyBackend.addEventListener('click', () => {
+          navigator.clipboard.writeText(backendUrlDisplay.value);
+          btnCopyBackend.textContent = '✓ Copied!';
+          setTimeout(() => btnCopyBackend.textContent = 'Copy', 2000);
+        });
+      }
+
+      // 3. Modal Controls
+      const modal = document.getElementById('modal-otp');
+      const btnOpenOtp = document.getElementById('btn-open-otp-login');
+      const btnCloseModal = document.getElementById('btn-close-modal');
+      const modalStep1 = document.getElementById('modal-step-1');
+      const modalStep2 = document.getElementById('modal-step-2');
+      const inputModalEmail = document.getElementById('input-modal-email');
+      const inputModalCode = document.getElementById('input-modal-code');
+      const btnModalSend = document.getElementById('btn-modal-send-otp');
+      const btnModalVerify = document.getElementById('btn-modal-verify-otp');
+      const feedback1 = document.getElementById('modal-feedback-1');
+      const feedback2 = document.getElementById('modal-feedback-2');
+      const modalSentTo = document.getElementById('modal-sent-to');
+      const userChip = document.getElementById('user-chip');
+      const userEmailDisplay = document.getElementById('user-email');
+      const btnLogout = document.getElementById('btn-logout');
+
+      if (btnOpenOtp) btnOpenOtp.addEventListener('click', () => modal.classList.remove('hidden'));
+      if (btnCloseModal) btnCloseModal.addEventListener('click', () => modal.classList.add('hidden'));
+
+      let pendingEmail = '';
+
+      // Send OTP
+      if (btnModalSend) {
+        btnModalSend.addEventListener('click', async () => {
+          const email = inputModalEmail.value.trim();
+          if (!email || !email.includes('@')) {
+            feedback1.className = 'feedback-box error';
+            feedback1.textContent = 'Please enter a valid email address.';
+            feedback1.classList.remove('hidden');
+            return;
+          }
+
+          feedback1.className = 'feedback-box';
+          feedback1.textContent = 'Sending OTP...';
+          feedback1.classList.remove('hidden');
+
+          try {
+            const res = await fetch('/api/auth/otp/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email })
+            });
+            const data = await res.json().catch(() => ({}));
+            pendingEmail = email;
+            modalSentTo.textContent = email;
+            modalStep1.classList.add('hidden');
+            modalStep2.classList.remove('hidden');
+            inputModalCode.focus();
+          } catch (e) {
+            feedback1.className = 'feedback-box error';
+            feedback1.textContent = 'Failed to send OTP code.';
+          }
+        });
+      }
+
+      // Verify OTP
+      if (btnModalVerify) {
+        btnModalVerify.addEventListener('click', async () => {
+          const token = inputModalCode.value.trim();
+          if (token.length !== 6) {
+            feedback2.className = 'feedback-box error';
+            feedback2.textContent = 'Please enter 6-digit code.';
+            feedback2.classList.remove('hidden');
+            return;
+          }
+
+          feedback2.className = 'feedback-box';
+          feedback2.textContent = 'Verifying...';
+          feedback2.classList.remove('hidden');
+
+          try {
+            const res = await fetch('/api/auth/otp/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: pendingEmail, token })
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok) {
+              feedback2.className = 'feedback-box success';
+              feedback2.textContent = '✓ Verified! Logging in...';
+              setTimeout(() => {
+                modal.classList.add('hidden');
+                btnOpenOtp.classList.add('hidden');
+                userEmailDisplay.textContent = pendingEmail;
+                userChip.classList.remove('hidden');
+              }, 800);
+            } else {
+              feedback2.className = 'feedback-box error';
+              feedback2.textContent = data.error || 'Invalid OTP code.';
+            }
+          } catch (e) {
+            feedback2.className = 'feedback-box error';
+            feedback2.textContent = 'Verification error.';
+          }
+        });
+      }
+
+      if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+          userChip.classList.add('hidden');
+          btnOpenOtp.classList.remove('hidden');
+        });
+      }
+
+      // 4. Fetch Health & System Status
+      fetch('/api/health')
+        .then(r => r.json())
+        .then(data => {
+          const dotGemini = document.getElementById('dot-gemini');
+          const labelGemini = document.getElementById('label-gemini');
+          if (data.gemini_configured) {
+            dotGemini.className = 'status-dot';
+            labelGemini.innerHTML = '<strong>Gemini AI Engine:</strong> Hidden Key Active';
+          } else {
+            dotGemini.className = 'status-dot warning';
+            labelGemini.innerHTML = '<strong>Gemini AI Engine:</strong> Setup Key in Vercel';
+          }
+
+          const dotSupabase = document.getElementById('dot-supabase');
+          const labelSupabase = document.getElementById('label-supabase');
+          if (data.supabase_configured) {
+            dotSupabase.className = 'status-dot';
+            labelSupabase.innerHTML = '<strong>Supabase DB:</strong> Connected';
+          } else {
+            dotSupabase.className = 'status-dot';
+            labelSupabase.innerHTML = '<strong>Supabase DB:</strong> Ready for Setup';
+          }
+        })
+        .catch(() => {});
+    });
+  </script>
+</body>
+</html>
