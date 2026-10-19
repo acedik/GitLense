@@ -175,38 +175,81 @@
 
     <!-- Auth Modal / Overlay -->
     <section id="auth-panel" class="auth-panel glass-card hidden">
-      <div class="auth-tabs">
-        <button id="tab-sign-in" class="auth-tab active">Sign In</button>
-        <button id="tab-sign-up" class="auth-tab">Create Account</button>
+      <!-- Auth Strategy Selector (OTP vs Password) -->
+      <div class="auth-type-selector">
+        <button type="button" id="type-otp" class="auth-type-btn active">⚡ Email OTP (Passwordless)</button>
+        <button type="button" id="type-pwd" class="auth-type-btn">🔑 Password</button>
       </div>
 
-      <form id="auth-form" class="auth-form">
-        <div class="form-group">
-          <label for="auth-email">Email Address</label>
-          <input type="email" id="auth-email" placeholder="alex@company.com" required spellcheck="false">
+      <!-- 1. OTP Auth Section (Default) -->
+      <div id="otp-auth-section" class="otp-auth-section">
+        <!-- Step 1: Request OTP -->
+        <div id="otp-step-request" class="otp-step">
+          <div class="form-group">
+            <label for="auth-otp-email">Email Address</label>
+            <input type="email" id="auth-otp-email" placeholder="alex@company.com" spellcheck="false">
+          </div>
+          <button type="button" id="btn-send-otp" class="btn-primary w-full">
+            <span>Send 6-Digit OTP</span>
+          </button>
+          <div class="otp-hint-text">Instant passwordless login via Supabase Auth.</div>
         </div>
 
-        <div class="form-group">
-          <label for="auth-password">Password</label>
-          <input type="password" id="auth-password" placeholder="At least 6 characters" required>
+        <!-- Step 2: Verify OTP -->
+        <div id="otp-step-verify" class="otp-step hidden">
+          <div class="otp-target-row">
+            <span>Code sent to <strong id="otp-target-email">user@email.com</strong></span>
+            <button type="button" id="btn-change-otp-email" class="btn-text-sm">Change</button>
+          </div>
+          <div class="form-group">
+            <label for="auth-otp-code">6-Digit Verification Code</label>
+            <input type="text" id="auth-otp-code" class="input-otp-code" placeholder="123456" maxlength="6" inputmode="numeric" spellcheck="false">
+          </div>
+          <button type="button" id="btn-verify-otp" class="btn-primary w-full">
+            <span>Verify & Sign In</span>
+          </button>
+          <div class="otp-resend-row">
+            <button type="button" id="btn-resend-otp" class="btn-text-sm" disabled>Resend Code (<span id="resend-timer">30</span>s)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Traditional Password Form (Secondary) -->
+      <div id="pwd-auth-section" class="pwd-auth-section hidden">
+        <div class="auth-tabs">
+          <button type="button" id="tab-sign-in" class="auth-tab active">Sign In</button>
+          <button type="button" id="tab-sign-up" class="auth-tab">Create Account</button>
         </div>
 
-        <div id="auth-confirm-group" class="form-group hidden">
-          <label for="auth-confirm-password">Confirm Password</label>
-          <input type="password" id="auth-confirm-password" placeholder="Re-enter password">
-        </div>
+        <form id="auth-form" class="auth-form">
+          <div class="form-group">
+            <label for="auth-email">Email Address</label>
+            <input type="email" id="auth-email" placeholder="alex@company.com" spellcheck="false">
+          </div>
 
-        <button type="submit" id="btn-auth-submit" class="btn-primary w-full">
-          <span id="auth-submit-label">Sign In</span>
-        </button>
+          <div class="form-group">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" placeholder="At least 6 characters">
+          </div>
 
-        <div id="auth-feedback" class="feedback-text hidden"></div>
+          <div id="auth-confirm-group" class="form-group hidden">
+            <label for="auth-confirm-password">Confirm Password</label>
+            <input type="password" id="auth-confirm-password" placeholder="Re-enter password">
+          </div>
 
-        <div class="auth-footer-links">
-          <button type="button" id="btn-dismiss-auth" class="link-btn">Continue as Guest</button>
-        </div>
-      </form>
+          <button type="submit" id="btn-auth-submit" class="btn-primary w-full">
+            <span id="auth-submit-label">Sign In</span>
+          </button>
+        </form>
+      </div>
+
+      <div id="auth-feedback" class="feedback-text hidden"></div>
+
+      <div class="auth-footer-links">
+        <button type="button" id="btn-dismiss-auth" class="link-btn">Continue as Guest</button>
+      </div>
     </section>
+
 
     <!-- Repository Detection Card -->
     <section class="repo-card glass-card">
@@ -256,16 +299,41 @@
         </div>
       </div>
       
+      <!-- AI Engine & Gemini API Mode -->
       <div class="form-group">
-        <label for="input-gemini-key">
-          Gemini API Key <span class="required">*</span>
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="help-link">Get Free Key ↗</a>
-        </label>
-        <div class="password-wrapper">
-          <input type="password" id="input-gemini-key" placeholder="AIzaSy..." spellcheck="false">
-          <button type="button" id="btn-toggle-key-visibility" class="btn-toggle-pw" title="Show/Hide">👁️</button>
+        <label for="select-ai-engine">AI Plagiarism Engine Mode</label>
+        <select id="select-ai-engine">
+          <option value="proxy" selected>⚡ Vercel Backend Proxy (Key Hidden • Recommended)</option>
+          <option value="direct">🔑 Custom Gemini API Key (Self-Hosted)</option>
+        </select>
+      </div>
+
+      <!-- Vercel Cloud Backend Proxy URL Field -->
+      <div id="backend-proxy-fields" class="provider-fields">
+        <div class="form-group">
+          <label for="input-backend-url">
+            Vercel Backend URL
+            <span class="badge-tag">API Key Hidden</span>
+          </label>
+          <input type="text" id="input-backend-url" placeholder="https://your-project.vercel.app or http://localhost:5000" spellcheck="false">
+          <div class="field-hint">Your Google Gemini API key is kept 100% hidden and secure on Vercel. No client API key needed!</div>
         </div>
       </div>
+
+      <!-- Direct Gemini Key Field (Shown only when Direct is chosen) -->
+      <div id="direct-gemini-fields" class="provider-fields hidden">
+        <div class="form-group">
+          <label for="input-gemini-key">
+            Google Gemini API Key
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="help-link">Get Free Key ↗</a>
+          </label>
+          <div class="password-wrapper">
+            <input type="password" id="input-gemini-key" placeholder="AIzaSy..." spellcheck="false">
+            <button type="button" id="btn-toggle-key-visibility" class="btn-toggle-pw" title="Show/Hide">👁️</button>
+          </div>
+        </div>
+      </div>
+
 
       <div class="form-group">
         <label for="input-github-token">

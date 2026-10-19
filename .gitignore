@@ -9,3 +9,6 @@ dist/
 *.egg-info/
 *.zip
 !docs/chitgit_chrome_extension.zip
+*.crx
+*.pem
+

@@ -10,8 +10,10 @@
 ## 🌟 Key Features
 
 - **Minimal Glassmorphism UI**: High-end frosted glass aesthetics with ambient glows, glowing status badges, and responsive commit preview cards.
-- **Authentication System**: Built-in Sign In and Sign Up tabs supporting **Supabase Auth**, **Firebase Auth**, and local mock storage out of the box.
-- **Chrome Extension (Manifest V3)**: Native browser extension that runs directly inside Google Chrome without requiring external servers.
+- **⚡ Email OTP Authentication**: Built-in passwordless 6-digit OTP verification via **Supabase Auth** (or traditional email/password and local demo fallback).
+- **🔒 Hidden API Key Architecture**: Google Gemini API key is kept 100% secret and protected on your **Vercel Serverless Backend**. End users do NOT need to input an API key!
+- **📊 Cloud Web Dashboard**: Obsidian-black web dashboard on Vercel with real-time scan feeds, plagiarism KPI metrics, and 1-click CSV exports.
+- **Chrome Extension (Manifest V3)**: Native browser extension that runs directly inside Google Chrome, Edge, and Brave.
 - **GitHub In-Page Integration**: Auto-detects GitHub repositories and injects a one-click scan button directly into repository and commit pages.
 - **AI Plagiarism Detection (Google Gemini)**: Analyzes commit diffs using structured JSON schemas to classify code changes into:
   - `ORIGINAL`: Custom, unique architecture or standard domain-specific implementation.
@@ -39,19 +41,24 @@
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Configuration & Cloud Setup
 
-1. Click the **chitgit** icon in your Chrome toolbar.
-2. Open **Settings** (⚙️ button).
-3. Enter your **Google Gemini API Key**:
-   - [Get a free API key at Google AI Studio](https://aistudio.google.com/app/apikey).
-4. *(Optional)* Select your **Authentication Provider**:
-   - **Local / Demo Storage** (default, no setup required)
-   - **Supabase Auth** (enter Supabase Project URL & Anon Key)
-   - **Firebase Auth** (enter Firebase Web API Key)
-5. *(Optional)* Enter a **GitHub Personal Access Token** to increase GitHub API rate limits from 60 to 5,000 requests per hour.
-6. Select your commit scan depth (e.g., 5, 10, 20, or 50 commits) and preferred Gemini model (`gemini-flash-latest` recommended).
-7. Click **Save Settings**.
+### 1. Vercel Cloud Backend (Hidden API Key)
+1. Deploy this repository to **Vercel**.
+2. In Vercel Project Settings → **Environment Variables**, add:
+   - `GEMINI_API_KEY`: Your Google AI Studio API key (kept 100% hidden).
+   - `SUPABASE_URL`: Your Supabase Project URL (`https://xyz.supabase.co`).
+   - `SUPABASE_ANON_KEY`: Your Supabase Anon API key.
+3. In the Chrome Extension Settings (⚙️):
+   - Set **AI Plagiarism Engine Mode** to `⚡ Vercel Backend Proxy (Key Hidden)`.
+   - Enter your Vercel URL (e.g. `https://your-app.vercel.app`).
+   - Done! You can now analyze commits without exposing your API key to any client!
+
+### 2. Supabase Database & OTP Auth (1-Click SQL Setup)
+1. Open your [Supabase Dashboard](https://supabase.com/dashboard) → **SQL Editor**.
+2. Run the ready-to-use SQL schema from [`supabase/schema.sql`](file:///D:/hp/osnit/GitLense/supabase/schema.sql).
+3. Under **Authentication** → **Providers** → **Email**, ensure email sign-in / OTP is enabled.
+
 
 ---
 

@@ -1,26 +1,28 @@
 /**
  * chitgit Google Gemini AI Plagiarism Detection Client
+ * Supports both:
+ * 1. Secure Serverless Backend Proxy (Hides API key completely on Vercel)
+ * 2. Direct Google Gemini AI Studio Key (Custom self-hosted fallback)
  */
 const GeminiAPI = {
   DEFAULT_MODEL: 'gemini-flash-latest',
+  DEFAULT_BACKEND_URL: 'https://chitgit.vercel.app', // Default Vercel deployment URL
 
   /**
-   * Evaluates a commit's code diff using Gemini API for potential plagiarism.
+   * Evaluates a commit's code diff using either the secure backend proxy (Hidden Key)
+   * or direct Gemini API.
    *
    * @param {Object} params
-   * @param {string} params.apiKey Google Gemini API key
-   * @param {string} params.model Optional model name (default: gemini-flash-latest)
+   * @param {string} [params.apiKey] Optional Google Gemini API key (if direct mode)
+   * @param {string} [params.backendUrl] Optional Vercel Backend URL (for hidden key proxy)
+   * @param {string} [params.authToken] Optional Supabase Auth token
+   * @param {string} [params.model] Optional model name (default: gemini-flash-latest)
    * @param {string} params.repo Repository name (owner/repo)
    * @param {string} params.sha Commit SHA
    * @param {string} params.message Commit message
    * @param {string} params.diff Combined code diff patch
    */
-  async analyzeCommitPlagiarism({ apiKey, model = this.DEFAULT_MODEL, repo, sha, message, diff }) {
-    if (!apiKey || apiKey.trim().length === 0) {
-      throw new Error('Google Gemini API Key is missing. Please set your API key in Extension Settings.');
-    }
-
-    const key = apiKey.trim();
+  async analyzeCommitPlagiarism({ apiKey, backendUrl, authToken, model = this.DEFAULT_MODEL, repo, sha, message, diff }) {
     const shortSha = sha ? sha.substring(0, 7) : 'unknown';
 
     // If diff is empty (e.g., pure file delete, merge commit, or binary files)
@@ -34,6 +36,72 @@ const GeminiAPI = {
       };
     }
 
+    // -------------------------------------------------------------
+    // OPTION 1: Secure Vercel Backend Proxy (API Key is HIDDEN)
+    // -------------------------------------------------------------
+    const targetBackend = backendUrl && backendUrl.trim().length > 0 ? backendUrl.trim().replace(/\/+$/, '') : null;
+
+    if (targetBackend || (!apiKey || apiKey.trim().length === 0)) {
+      const urlToUse = targetBackend || this.DEFAULT_BACKEND_URL;
+      const endpoint = `${urlToUse}/api/analyze`;
+
+      try {
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            repo,
+            sha,
+            message: message || '',
+            diff: diff,
+            model: model
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          // If backend returns specific error, handle it
+          const errDetail = data.error || data.message || `Backend proxy error (${res.status})`;
+          // If the default backend is not reached and no direct key, prompt the user
+          if (res.status === 404 || res.status === 502 || res.status === 503) {
+            throw new Error(`Backend Proxy (${urlToUse}) unreachable. Please verify your Vercel Backend URL in Settings.`);
+          }
+          throw new Error(errDetail);
+        }
+
+        return {
+          verdict: data.verdict || 'ORIGINAL',
+          plagiarism_score: typeof data.plagiarism_score === 'number' ? data.plagiarism_score : 0,
+          plagiarism_category: data.plagiarism_category || 'Original Implementation',
+          flagged_code_snippets: Array.isArray(data.flagged_code_snippets) ? data.flagged_code_snippets : [],
+          reasoning: data.reasoning || 'Evaluated via secure Vercel Gemini AI engine.'
+        };
+      } catch (backendErr) {
+        // If user also has a direct API key, fallback gracefully
+        if (apiKey && apiKey.trim().length > 0) {
+          console.warn('Backend proxy failed, falling back to direct Gemini API key:', backendErr);
+        } else {
+          throw backendErr;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // OPTION 2: Direct Google Gemini API (Client Key Provided)
+    // -------------------------------------------------------------
+    if (!apiKey || apiKey.trim().length === 0) {
+      throw new Error('No API Key or Backend URL available. Please configure your Vercel Backend URL or Gemini API Key in Settings.');
+    }
+
+    const key = apiKey.trim();
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
     const promptText = `You are an expert static code analyst, software engineer, and academic integrity reviewer specializing in source code originality and plagiarism detection.

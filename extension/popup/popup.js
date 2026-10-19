@@ -23,6 +23,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userEmailText = document.getElementById('user-email-text');
   const btnSignOut = document.getElementById('btn-sign-out');
 
+  // DOM Elements - OTP Auth
+  const typeOtp = document.getElementById('type-otp');
+  const typePwd = document.getElementById('type-pwd');
+  const otpAuthSection = document.getElementById('otp-auth-section');
+  const pwdAuthSection = document.getElementById('pwd-auth-section');
+  const otpStepRequest = document.getElementById('otp-step-request');
+  const otpStepVerify = document.getElementById('otp-step-verify');
+  const authOtpEmail = document.getElementById('auth-otp-email');
+  const btnSendOtp = document.getElementById('btn-send-otp');
+  const otpTargetEmail = document.getElementById('otp-target-email');
+  const btnChangeOtpEmail = document.getElementById('btn-change-otp-email');
+  const authOtpCode = document.getElementById('auth-otp-code');
+  const btnVerifyOtp = document.getElementById('btn-verify-otp');
+  const btnResendOtp = document.getElementById('btn-resend-otp');
+  const resendTimer = document.getElementById('resend-timer');
+
   // DOM Elements - Usage & Pricing Plans
   const usageStatusDot = document.getElementById('usage-status-dot');
   const usageLabel = document.getElementById('usage-label');
@@ -70,6 +86,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const firebaseFields = document.getElementById('firebase-config-fields');
   const inputFirebaseKey = document.getElementById('input-firebase-key');
 
+  const selectAiEngine = document.getElementById('select-ai-engine');
+  const backendProxyFields = document.getElementById('backend-proxy-fields');
+  const inputBackendUrl = document.getElementById('input-backend-url');
+  const directGeminiFields = document.getElementById('direct-gemini-fields');
   const inputGeminiKey = document.getElementById('input-gemini-key');
   const btnToggleKeyVis = document.getElementById('btn-toggle-key-visibility');
   const inputGithubToken = document.getElementById('input-github-token');
@@ -143,6 +163,160 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     await handleAuthSubmit();
   });
+
+  // --- OTP Auth Event Handlers ---
+  let otpCountdownInterval = null;
+  let activeOtpEmail = '';
+
+  function startOtpResendTimer() {
+    let timeLeft = 30;
+    if (!btnResendOtp || !resendTimer) return;
+    btnResendOtp.disabled = true;
+    resendTimer.textContent = timeLeft;
+    clearInterval(otpCountdownInterval);
+    otpCountdownInterval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(otpCountdownInterval);
+        btnResendOtp.disabled = false;
+        btnResendOtp.textContent = 'Resend Code';
+      } else {
+        resendTimer.textContent = timeLeft;
+      }
+    }, 1000);
+  }
+
+  if (typeOtp && typePwd) {
+    typeOtp.addEventListener('click', () => {
+      typeOtp.classList.add('active');
+      typePwd.classList.remove('active');
+      otpAuthSection.classList.remove('hidden');
+      pwdAuthSection.classList.add('hidden');
+      authFeedback.classList.add('hidden');
+    });
+
+    typePwd.addEventListener('click', () => {
+      typePwd.classList.add('active');
+      typeOtp.classList.remove('active');
+      pwdAuthSection.classList.remove('hidden');
+      otpAuthSection.classList.add('hidden');
+      authFeedback.classList.add('hidden');
+    });
+  }
+
+  if (btnSendOtp) {
+    btnSendOtp.addEventListener('click', async () => {
+      const email = authOtpEmail.value.trim();
+      if (!email || !email.includes('@')) {
+        authFeedback.className = 'feedback-text error';
+        authFeedback.textContent = 'Please enter a valid email address.';
+        authFeedback.classList.remove('hidden');
+        authOtpEmail.focus();
+        return;
+      }
+
+      authFeedback.className = 'feedback-text';
+      authFeedback.textContent = 'Sending OTP code via Supabase...';
+      authFeedback.classList.remove('hidden');
+      btnSendOtp.disabled = true;
+
+      try {
+        const res = await AuthAPI.sendOtp({ email });
+        activeOtpEmail = email;
+        otpTargetEmail.textContent = email;
+        otpStepRequest.classList.add('hidden');
+        otpStepVerify.classList.remove('hidden');
+        authOtpCode.value = '';
+        authOtpCode.focus();
+
+        authFeedback.className = 'feedback-text';
+        authFeedback.textContent = res.message || 'Verification code sent to your email!';
+        startOtpResendTimer();
+      } catch (err) {
+        authFeedback.className = 'feedback-text error';
+        authFeedback.textContent = err.message || 'Failed to send OTP code.';
+      } finally {
+        btnSendOtp.disabled = false;
+      }
+    });
+  }
+
+  if (btnChangeOtpEmail) {
+    btnChangeOtpEmail.addEventListener('click', () => {
+      otpStepVerify.classList.add('hidden');
+      otpStepRequest.classList.remove('hidden');
+      authFeedback.classList.add('hidden');
+      authOtpEmail.focus();
+    });
+  }
+
+  if (btnResendOtp) {
+    btnResendOtp.addEventListener('click', async () => {
+      if (!activeOtpEmail) return;
+      btnResendOtp.disabled = true;
+      try {
+        const res = await AuthAPI.sendOtp({ email: activeOtpEmail });
+        authFeedback.className = 'feedback-text';
+        authFeedback.textContent = res.message || 'New OTP sent!';
+        startOtpResendTimer();
+      } catch (err) {
+        authFeedback.className = 'feedback-text error';
+        authFeedback.textContent = err.message || 'Failed to resend OTP.';
+        btnResendOtp.disabled = false;
+      }
+    });
+  }
+
+  if (btnVerifyOtp) {
+    btnVerifyOtp.addEventListener('click', async () => {
+      const token = authOtpCode.value.trim();
+      if (!token) {
+        authFeedback.className = 'feedback-text error';
+        authFeedback.textContent = 'Please enter the 6-digit OTP code.';
+        authFeedback.classList.remove('hidden');
+        authOtpCode.focus();
+        return;
+      }
+
+      authFeedback.className = 'feedback-text';
+      authFeedback.textContent = 'Verifying OTP code...';
+      authFeedback.classList.remove('hidden');
+      btnVerifyOtp.disabled = true;
+
+      try {
+        const user = await AuthAPI.verifyOtp({ email: activeOtpEmail, token });
+        currentUserEmail = user.email;
+        await UsageManager.registerDeviceAccount(currentUserEmail);
+
+        authFeedback.textContent = `Welcome, ${user.email}!`;
+        setTimeout(async () => {
+          updateAuthUI(user);
+          authPanel.classList.add('hidden');
+          otpStepVerify.classList.add('hidden');
+          otpStepRequest.classList.remove('hidden');
+          authOtpEmail.value = '';
+          authOtpCode.value = '';
+          authFeedback.classList.add('hidden');
+          await updateUsageUI();
+        }, 800);
+      } catch (err) {
+        authFeedback.className = 'feedback-text error';
+        authFeedback.textContent = err.message || 'Invalid or expired OTP code.';
+      } finally {
+        btnVerifyOtp.disabled = false;
+      }
+    });
+  }
+
+  // --- AI Engine & Backend Proxy Mode Toggle ---
+  if (selectAiEngine) {
+    selectAiEngine.addEventListener('change', () => {
+      const isProxy = selectAiEngine.value === 'proxy';
+      backendProxyFields.classList.toggle('hidden', !isProxy);
+      directGeminiFields.classList.toggle('hidden', isProxy);
+    });
+  }
+
 
   // --- Pricing & Plan Listeners ---
   const usageBar = document.querySelector('.usage-bar');
@@ -472,11 +646,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         'supabaseUrl',
         'supabaseAnonKey',
         'firebaseApiKey',
+        'aiEngineMode',
+        'backendUrl',
         'geminiApiKey',
         'githubToken',
         'commitCount',
         'geminiModel'
       ], (data) => {
+        const engineMode = data.aiEngineMode || 'proxy';
+        if (selectAiEngine) selectAiEngine.value = engineMode;
+        if (backendProxyFields && directGeminiFields) {
+          backendProxyFields.classList.toggle('hidden', engineMode !== 'proxy');
+          directGeminiFields.classList.toggle('hidden', engineMode === 'proxy');
+        }
+        if (inputBackendUrl) inputBackendUrl.value = data.backendUrl || 'https://chitgit.vercel.app';
         inputGeminiKey.value = data.geminiApiKey || '';
         if (data.githubToken) inputGithubToken.value = data.githubToken;
         if (data.commitCount) selectCommitCount.value = data.commitCount;
@@ -490,7 +673,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.supabaseAnonKey) inputSupabaseKey.value = data.supabaseAnonKey;
         if (data.firebaseApiKey) inputFirebaseKey.value = data.firebaseApiKey;
 
-        if (!inputGeminiKey.value) {
+        // In direct mode, prompt if key is missing; in proxy mode, no prompt needed!
+        if (engineMode === 'direct' && !inputGeminiKey.value) {
           settingsPanel.classList.remove('hidden');
         }
       });
@@ -502,6 +686,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const supabaseUrl = inputSupabaseUrl.value.trim();
     const supabaseAnonKey = inputSupabaseKey.value.trim();
     const firebaseApiKey = inputFirebaseKey.value.trim();
+    const aiEngineMode = selectAiEngine ? selectAiEngine.value : 'proxy';
+    const backendUrl = inputBackendUrl ? inputBackendUrl.value.trim() : '';
     const geminiApiKey = inputGeminiKey.value.trim();
     const githubToken = inputGithubToken.value.trim();
     const commitCount = selectCommitCount.value;
@@ -513,6 +699,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         supabaseUrl,
         supabaseAnonKey,
         firebaseApiKey,
+        aiEngineMode,
+        backendUrl,
         geminiApiKey,
         githubToken,
         commitCount,
@@ -582,10 +770,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const engineMode = selectAiEngine ? selectAiEngine.value : 'proxy';
+    const backendUrl = inputBackendUrl ? inputBackendUrl.value.trim() : '';
     const geminiApiKey = inputGeminiKey.value.trim();
-    if (!geminiApiKey) {
+
+    if (engineMode === 'direct' && !geminiApiKey) {
       settingsPanel.classList.remove('hidden');
-      alert('Please enter your Google Gemini API Key in Settings to run plagiarism analysis.');
+      alert('Please enter your Google Gemini API Key in Settings or switch to Vercel Backend Proxy (Hidden Key) mode.');
       inputGeminiKey.focus();
       return;
     }
@@ -627,6 +818,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       let suspiciousCount = 0;
       let plagiarizedCount = 0;
 
+      const authConfig = await AuthAPI.getConfig();
+
       for (let i = 0; i < totalCommits; i++) {
         const item = commits[i];
         const sha = item.sha;
@@ -647,7 +840,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         let aiResult;
         try {
           aiResult = await GeminiAPI.analyzeCommitPlagiarism({
-            apiKey: geminiApiKey,
+            apiKey: engineMode === 'direct' ? geminiApiKey : '',
+            backendUrl: engineMode === 'proxy' ? (backendUrl || 'https://chitgit.vercel.app') : '',
+            authToken: authConfig.token,
             model: model,
             repo: `${repoInfo.owner}/${repoInfo.repo}`,
             sha: sha,
