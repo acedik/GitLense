@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           toggleProviderFields(data.authProvider);
         }
         if (data.supabaseUrl) inputSupabaseUrl.value = data.supabaseUrl;
-        if (data.supabaseAnonKey) inputSupabaseKey.value = data.supabaseAnonKey;
+        inputSupabaseKey.value = data.supabaseAnonKey || 'sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5';
         if (data.firebaseApiKey) inputFirebaseKey.value = data.firebaseApiKey;
 
         // In direct mode, prompt if key is missing; in proxy mode, no prompt needed!

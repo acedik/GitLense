@@ -10,7 +10,7 @@ const DEFAULT_CONFIG = {
   commitCount: '5',
   authProvider: 'supabase',
   supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseAnonKey: 'sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5',
   geminiApiKey: ''
 };
 

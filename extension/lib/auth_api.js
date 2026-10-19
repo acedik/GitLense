@@ -24,7 +24,7 @@ const AuthAPI = {
           resolve({
             provider: data.authProvider || 'supabase',
             supabaseUrl: data.supabaseUrl || '',
-            supabaseAnonKey: data.supabaseAnonKey || '',
+            supabaseAnonKey: data.supabaseAnonKey || 'sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5',
             firebaseApiKey: data.firebaseApiKey || '',
             backendUrl: data.backendUrl || '',
             user: data.currentUser || null,
@@ -36,7 +36,7 @@ const AuthAPI = {
         resolve({
           provider: localStorage.getItem('gitlense_auth_provider') || 'supabase',
           supabaseUrl: localStorage.getItem('gitlense_sb_url') || '',
-          supabaseAnonKey: localStorage.getItem('gitlense_sb_key') || '',
+          supabaseAnonKey: localStorage.getItem('gitlense_sb_key') || 'sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5',
           backendUrl: localStorage.getItem('gitlense_backend_url') || '',
           user: user ? JSON.parse(user) : null,
           token: localStorage.getItem('gitlense_token')
