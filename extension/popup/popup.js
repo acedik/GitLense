@@ -226,7 +226,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpTargetEmail.textContent = email;
         otpStepRequest.classList.add('hidden');
         otpStepVerify.classList.remove('hidden');
-        authOtpCode.value = '';
+        if (res.method === 'local' || window._lastDemoOtp) {
+          authOtpCode.value = window._lastDemoOtp || '123456';
+        } else {
+          authOtpCode.value = '';
+        }
         authOtpCode.focus();
 
         authFeedback.className = 'feedback-text';
