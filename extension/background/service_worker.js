@@ -9,7 +9,7 @@ const DEFAULT_CONFIG = {
   geminiModel: 'gemini-1.5-flash',
   commitCount: '5',
   authProvider: 'supabase',
-  supabaseUrl: '',
+  supabaseUrl: 'https://kpuiszcppdmizpzaicab.supabase.co',
   supabaseAnonKey: 'sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5',
   geminiApiKey: ''
 };

@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           selectAuthProvider.value = data.authProvider;
           toggleProviderFields(data.authProvider);
         }
-        if (data.supabaseUrl) inputSupabaseUrl.value = data.supabaseUrl;
+        inputSupabaseUrl.value = data.supabaseUrl || 'https://kpuiszcppdmizpzaicab.supabase.co';
         inputSupabaseKey.value = data.supabaseAnonKey || 'sb_publishable_WsZiTZmi71ghFGRoP3y_LQ_qVkmS8q5';
         if (data.firebaseApiKey) inputFirebaseKey.value = data.firebaseApiKey;
 

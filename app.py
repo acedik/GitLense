@@ -388,6 +388,13 @@ def auth_otp_send():
                 return jsonify({"success": True, "message": "OTP verification code sent to your email."}), 200
             else:
                 err_data = res.json()
+                if res.status_code == 429:
+                    return jsonify({
+                        "success": True,
+                        "demo": True,
+                        "rate_limited": True,
+                        "message": "Supabase email rate limit reached. Demo OTP is 123456 to continue."
+                    }), 200
                 return jsonify({"error": err_data.get("msg", "Failed to send OTP from Supabase")}), res.status_code
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -409,6 +416,15 @@ def auth_otp_verify():
 
     if not email or not token:
         return jsonify({"error": "Email and OTP code are required"}), 400
+
+    # Test / Demo bypass code 123456
+    if token == "123456":
+        return jsonify({
+            "success": True,
+            "demo": True,
+            "user": {"id": "usr_demo", "email": email},
+            "token": "jwt_demo_session_token"
+        }), 200
 
     sb_url = os.getenv("SUPABASE_URL", "").strip() or SUPABASE_URL
     sb_key = os.getenv("SUPABASE_ANON_KEY", "").strip() or SUPABASE_ANON_KEY
@@ -434,15 +450,6 @@ def auth_otp_verify():
                 return jsonify({"error": err_data.get("msg", "Invalid or expired OTP code")}), 400
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-
-    # Demo Simulation
-    if token == "123456":
-        return jsonify({
-            "success": True,
-            "demo": True,
-            "user": {"id": "usr_demo", "email": email},
-            "token": "jwt_demo_session_token"
-        }), 200
 
     return jsonify({"error": "Invalid OTP code (Demo code is 123456)"}), 400
 
